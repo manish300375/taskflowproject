@@ -12,9 +12,10 @@ import {
   LogOut,
   Menu,
   X,
-  AlertCircle
+  AlertCircle,
+  Save
 } from 'lucide-react';
-import { taskHelpers, Task } from '../lib/database';
+import { taskHelpers, Task, CreateTaskData } from '../lib/database';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -23,6 +24,7 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout, user }: DashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskStats, setTaskStats] = useState({
     total: 0,
@@ -31,6 +33,14 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newTask, setNewTask] = useState<CreateTaskData>({
+    title: '',
+    description: '',
+    due_date: '',
+    priority: 'medium',
+    status: 'pending'
+  });
 
   const userName = user?.user_metadata?.full_name || user?.email || 'User';
 
@@ -112,6 +122,61 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
       console.error('Error deleting task:', err);
       setError('Failed to delete task');
     }
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newTask.title.trim()) {
+      setError('Task title is required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const taskData: CreateTaskData = {
+        title: newTask.title.trim(),
+        description: newTask.description?.trim() || undefined,
+        due_date: newTask.due_date || undefined,
+        priority: newTask.priority,
+        status: newTask.status
+      };
+
+      const { data, error } = await taskHelpers.createTask(taskData);
+      
+      if (error) {
+        console.error('Error creating task:', error);
+        setError('Failed to create task');
+      } else {
+        // Reset form
+        setNewTask({
+          title: '',
+          description: '',
+          due_date: '',
+          priority: 'medium',
+          status: 'pending'
+        });
+        
+        // Close modal
+        setIsAddTaskModalOpen(false);
+        
+        // Reload tasks and stats
+        loadTasks();
+        loadTaskStats();
+      }
+    } catch (err) {
+      console.error('Error creating task:', err);
+      setError('Failed to create task');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewTask(prev => ({ ...prev, [name]: value }));
   };
 
   const formatDate = (dateString: string) => {
@@ -284,7 +349,10 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
 
         {/* Add New Task Button */}
         <div className="mb-8">
-          <button className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center space-x-2">
+          <button 
+            onClick={() => setIsAddTaskModalOpen(true)}
+            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center space-x-2"
+          >
             <Plus className="h-5 w-5" />
             <span>Add New Task</span>
           </button>
@@ -363,6 +431,124 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
           )}
         </div>
       </main>
+
+      {/* Add Task Modal */}
+      {isAddTaskModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Add New Task</h3>
+                <button
+                  onClick={() => setIsAddTaskModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddTask} className="px-6 py-4 space-y-4">
+              {/* Title Field */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Task Title *
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  required
+                  value={newTask.title}
+                  onChange={handleInputChange}
+              {/* Description Field */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  value={newTask.description}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  placeholder="Enter task description (optional)"
+                />
+              </div>
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              {/* Due Date Field */}
+              <div>
+                <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2">
+                  Due Date
+                </label>
+                <input
+                  id="due_date"
+                  name="due_date"
+                  type="date"
+                  value={newTask.due_date}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                />
+              </div>
+                  placeholder="Enter task title"
+              {/* Priority Field */}
+              <div>
+                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  id="priority"
+                  name="priority"
+                  value={newTask.priority}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+                />
+              {/* Status Field */}
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={newTask.status}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              </div>
+              {/* Form Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsAddTaskModalOpen(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !newTask.title.trim()}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{isSubmitting ? 'Creating...' : 'Create Task'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
