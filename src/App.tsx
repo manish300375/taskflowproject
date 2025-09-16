@@ -26,7 +26,7 @@ function App() {
       if (user) {
         setUser(user);
         setIsLoggedIn(true);
-        loadUserData();
+        await loadUserData();
       }
       setIsLoading(false);
     };
@@ -52,7 +52,7 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, [currentPage]);
+  }, []);
 
   const loadUserData = async () => {
     try {
@@ -72,6 +72,11 @@ function App() {
     setRecentTasks([]);
     setTaskStats({ total: 0, completed: 0, pending: 0 });
   };
+
+  // Debug logging to see what's happening
+  React.useEffect(() => {
+    console.log('Auth state:', { isLoggedIn, user: !!user, currentPage, isLoading });
+  }, [isLoggedIn, user, currentPage, isLoading]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No due date';
