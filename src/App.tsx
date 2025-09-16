@@ -151,7 +151,11 @@ function App() {
 
   if (currentPage === 'dashboard') {
     return (
-      <Dashboard onLogout={handleLogout} user={user} />
+      <Dashboard 
+        onLogout={handleLogout} 
+        onNavigateHome={() => handleNavigation('home')}
+        user={user} 
+      />
     );
   }
 
