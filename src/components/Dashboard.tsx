@@ -60,7 +60,7 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
   useEffect(() => {
     loadTasks();
     loadTaskStats();
-  }, []);
+  }, [currentView]);
 
   const loadTasks = async () => {
     try {
