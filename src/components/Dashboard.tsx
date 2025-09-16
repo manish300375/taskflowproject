@@ -461,6 +461,11 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   required
                   value={newTask.title}
                   onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  placeholder="Enter task title"
+                />
+              </div>
+
               {/* Description Field */}
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
@@ -476,7 +481,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   placeholder="Enter task description (optional)"
                 />
               </div>
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+
               {/* Due Date Field */}
               <div>
                 <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2">
@@ -491,7 +496,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                 />
               </div>
-                  placeholder="Enter task title"
+
               {/* Priority Field */}
               <div>
                 <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
@@ -509,7 +514,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   <option value="high">High</option>
                 </select>
               </div>
-                />
+
               {/* Status Field */}
               <div>
                 <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
@@ -526,7 +531,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   <option value="completed">Completed</option>
                 </select>
               </div>
-              </div>
+
               {/* Form Actions */}
               <div className="flex items-center justify-end space-x-3 pt-4">
                 <button
