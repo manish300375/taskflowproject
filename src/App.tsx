@@ -180,6 +180,37 @@ function App() {
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               {!isLoggedIn ? (<button 
+               <>
+                 <button 
+                   onClick={() => handleNavigation('login')}
+                   className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
+                 >
+                   Login
+                 </button>
+                 <button 
+                   onClick={() => handleNavigation('signup')}
+                   className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
+                 >
+                   Sign Up
+                 </button>
+               </>
+             ) : (
+               <>
+                 <button 
+                   onClick={() => handleNavigation('dashboard')}
+                   className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
+                 >
+                   Dashboard
+                 </button>
+                 <button 
+                   onClick={handleLogout}
+                   className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2"
+                 >
+                   Logout
+                 </button>
+               </>
+             )}
+           </div>
                 onClick={() => handleNavigation('login')}
                 className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
               >
