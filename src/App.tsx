@@ -308,12 +308,12 @@ function App() {
       </section>
 
       {/* Dashboard Snippet for Logged In Users */}
-      {isLoggedIn && user && (
+      {isLoggedIn && (
         <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Welcome back, {user.user_metadata?.full_name || user.email || 'User'}!
+                Welcome back, {user?.user_metadata?.full_name || user?.email || 'User'}!
               </h2>
               <p className="text-lg text-gray-600">Here's a quick overview of your tasks</p>
             </div>
