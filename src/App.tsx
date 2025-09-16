@@ -26,8 +26,8 @@ function App() {
       if (user) {
         setUser(user);
         setIsLoggedIn(true);
-        loadUserData();
-        setCurrentPage('dashboard');
+        await loadUserData();
+        // Don't automatically redirect to dashboard, let user stay on current page
       }
       setIsLoading(false);
     };
@@ -39,8 +39,12 @@ function App() {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         setIsLoggedIn(true);
-        loadUserData();
-        setCurrentPage('dashboard');
+        loadUserData().then(() => {
+          // Only redirect to dashboard after successful login, not on page refresh
+          if (currentPage === 'login' || currentPage === 'signup') {
+            setCurrentPage('dashboard');
+          }
+        });
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setIsLoggedIn(false);
@@ -89,7 +93,6 @@ function App() {
   };
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
     handleNavigation('dashboard');
   };
 
