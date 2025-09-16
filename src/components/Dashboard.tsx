@@ -11,16 +11,10 @@ import {
   User,
   LogOut,
   Menu,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
-
-interface Task {
-  id: number;
-  title: string;
-  dueDate: string;
-  status: 'pending' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-}
+import { taskHelpers, Task } from '../lib/database';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -29,75 +23,99 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout, user }: DashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: 'Complete project proposal',
-      dueDate: '2025-01-15',
-      status: 'pending',
-      priority: 'high'
-    },
-    {
-      id: 2,
-      title: 'Review team feedback',
-      dueDate: '2025-01-12',
-      status: 'completed',
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      title: 'Update documentation',
-      dueDate: '2025-01-18',
-      status: 'pending',
-      priority: 'low'
-    },
-    {
-      id: 4,
-      title: 'Schedule client meeting',
-      dueDate: '2025-01-14',
-      status: 'pending',
-      priority: 'high'
-    },
-    {
-      id: 5,
-      title: 'Prepare presentation slides',
-      dueDate: '2025-01-16',
-      status: 'completed',
-      priority: 'medium'
-    },
-    {
-      id: 6,
-      title: 'Code review for new feature',
-      dueDate: '2025-01-13',
-      status: 'pending',
-      priority: 'high'
-    }
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskStats, setTaskStats] = useState({
+    total: 0,
+    completed: 0,
+    pending: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const userName = user?.user_metadata?.full_name || user?.email || 'User';
+
+  // Load tasks and stats on component mount
+  useEffect(() => {
+    loadTasks();
+    loadTaskStats();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      const { data, error } = await taskHelpers.getRecentTasks(6);
+      if (error) {
+        setError('Failed to load tasks');
+        console.error('Error loading tasks:', error);
+      } else {
+        setTasks(data || []);
+      }
+    } catch (err) {
+      setError('Failed to load tasks');
+      console.error('Error loading tasks:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadTaskStats = async () => {
+    try {
+      const { data, error } = await taskHelpers.getTaskStats();
+      if (error) {
+        console.error('Error loading task stats:', error);
+      } else {
+        setTaskStats(data || { total: 0, completed: 0, pending: 0 });
+      }
+    } catch (err) {
+      console.error('Error loading task stats:', err);
+    }
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleTaskComplete = (taskId: number) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, status: task.status === 'completed' ? 'pending' : 'completed' }
-        : task
-    ));
+  const handleTaskComplete = async (taskId: string, currentStatus: 'pending' | 'completed') => {
+    try {
+      const { data, error } = await taskHelpers.toggleTaskStatus(taskId, currentStatus);
+      if (error) {
+        console.error('Error updating task:', error);
+        setError('Failed to update task');
+      } else {
+        // Update local state
+        setTasks(tasks.map(task => 
+          task.id === taskId 
+            ? { ...task, status: data.status }
+            : task
+        ));
+        // Reload stats
+        loadTaskStats();
+      }
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError('Failed to update task');
+    }
   };
 
-  const handleTaskDelete = (taskId: number) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const handleTaskDelete = async (taskId: string) => {
+    try {
+      const { error } = await taskHelpers.deleteTask(taskId);
+      if (error) {
+        console.error('Error deleting task:', error);
+        setError('Failed to delete task');
+      } else {
+        // Update local state
+        setTasks(tasks.filter(task => task.id !== taskId));
+        // Reload stats
+        loadTaskStats();
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      setError('Failed to delete task');
+    }
   };
-
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
-  const pendingTasks = totalTasks - completedTasks;
-  const recentTasks = tasks.slice(0, 6);
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'No due date';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
@@ -114,6 +132,17 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
       default: return 'text-gray-600 bg-gray-50';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <CheckCircle className="h-8 w-8 text-blue-500 animate-spin" />
+          <span className="text-lg text-gray-600">Loading dashboard...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -200,6 +229,18 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
           <p className="text-lg text-gray-600">Welcome back, {userName}</p>
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <span className="text-red-700">{error}</span>
+              <button 
+                onClick={() => setError(null)}
+                className="ml-auto text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick Stats Section */}
@@ -211,7 +252,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">{totalTasks}</p>
+                <p className="text-2xl font-bold text-gray-900">{taskStats.total}</p>
               </div>
             </div>
           </div>
@@ -223,7 +264,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{completedTasks}</p>
+                <p className="text-2xl font-bold text-gray-900">{taskStats.completed}</p>
               </div>
             </div>
           </div>
@@ -235,7 +276,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingTasks}</p>
+                <p className="text-2xl font-bold text-gray-900">{taskStats.pending}</p>
               </div>
             </div>
           </div>
@@ -256,7 +297,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
           </div>
           
           <div className="divide-y divide-gray-100">
-            {recentTasks.map((task) => (
+            {tasks.map((task) => (
               <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -271,7 +312,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                     <div className="flex items-center space-x-4 mt-2">
                       <div className="flex items-center space-x-1 text-sm text-gray-500">
                         <Calendar className="h-4 w-4" />
-                        <span>{formatDate(task.dueDate)}</span>
+                        <span>{formatDate(task.due_date || '')}</span>
                       </div>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                         task.status === 'completed' 
@@ -285,7 +326,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
                   
                   <div className="flex items-center space-x-2 ml-4">
                     <button
-                      onClick={() => handleTaskComplete(task.id)}
+                      onClick={() => handleTaskComplete(task.id, task.status)}
                       className={`p-2 rounded-lg transition-colors duration-200 ${
                         task.status === 'completed'
                           ? 'text-green-600 hover:bg-green-50'
@@ -314,7 +355,7 @@ export default function Dashboard({ onLogout, user }: DashboardProps) {
             ))}
           </div>
           
-          {recentTasks.length === 0 && (
+          {tasks.length === 0 && !isLoading && (
             <div className="px-6 py-12 text-center">
               <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No tasks yet. Create your first task to get started!</p>
