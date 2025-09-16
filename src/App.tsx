@@ -26,8 +26,7 @@ function App() {
       if (user) {
         setUser(user);
         setIsLoggedIn(true);
-        await loadUserData();
-        // Don't automatically redirect to dashboard, let user stay on current page
+        loadUserData();
       }
       setIsLoading(false);
     };
@@ -39,12 +38,11 @@ function App() {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         setIsLoggedIn(true);
-        loadUserData().then(() => {
-          // Only redirect to dashboard after successful login, not on page refresh
-          if (currentPage === 'login' || currentPage === 'signup') {
-            setCurrentPage('dashboard');
-          }
-        });
+        loadUserData();
+        // Only redirect to dashboard after successful login, not on page refresh
+        if (currentPage === 'login' || currentPage === 'signup') {
+          setCurrentPage('dashboard');
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setIsLoggedIn(false);
@@ -54,7 +52,7 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [currentPage]);
 
   const loadUserData = async () => {
     try {
@@ -183,36 +181,36 @@ function App() {
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               {!isLoggedIn ? (
-               <>
-                 <button 
-                   onClick={() => handleNavigation('login')}
-                   className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
-                 >
-                   Login
-                 </button>
-                 <button 
-                   onClick={() => handleNavigation('signup')}
-                   className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
-                 >
-                   Sign Up
-                 </button>
-               </>
-             ) : (
-               <>
-                 <button 
-                   onClick={() => handleNavigation('dashboard')}
-                  className="text-blue-500 hover:text-blue-600 transition-colors duration-200 px-4 py-2 font-medium"
-                 >
-                   Dashboard
-                 </button>
-                 <button 
-                   onClick={handleLogout}
-                   className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2"
-                 >
-                   Logout
-                 </button>
-               </>
-             )}
+                <>
+                  <button 
+                    onClick={() => handleNavigation('login')}
+                    className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
+                  >
+                    Login
+                  </button>
+                  <button 
+                    onClick={() => handleNavigation('signup')}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => handleNavigation('dashboard')}
+                    className="text-blue-500 hover:text-blue-600 transition-colors duration-200 px-4 py-2 font-medium"
+                  >
+                    Dashboard
+                  </button>
+                  <button 
+                    onClick={handleLogout}
+                    className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
            </div>
 
             {/* Mobile menu button */}
@@ -240,34 +238,36 @@ function App() {
                   Contact
                 </a>
                 {!isLoggedIn ? (
-                <div className="flex flex-col space-y-2 px-3 pt-4">
-                  <button 
-                    onClick={() => handleNavigation('login')}
-                    className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2 text-left"
-                  >
-                    Login
-                  </button>
-                  <button 
-                    onClick={() => handleNavigation('signup')}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
-                  >
-                    Sign Up
-                  </button>
-                </div>) : (
-                <div className="flex flex-col space-y-2 px-3 pt-4">
-                  <button 
-                    onClick={() => handleNavigation('dashboard')}
-                    className="text-blue-500 hover:text-blue-600 transition-colors duration-200 px-4 py-2 text-left font-medium"
-                  >
-                    Dashboard
-                  </button>
-                  <button 
-                    onClick={handleLogout}
-                    className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2 text-left"
-                  >
-                    Logout
-                  </button>
-                </div>)}
+                  <div className="flex flex-col space-y-2 px-3 pt-4">
+                    <button 
+                      onClick={() => handleNavigation('login')}
+                      className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2 text-left"
+                    >
+                      Login
+                    </button>
+                    <button 
+                      onClick={() => handleNavigation('signup')}
+                      className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-2 px-3 pt-4">
+                    <button 
+                      onClick={() => handleNavigation('dashboard')}
+                      className="text-blue-500 hover:text-blue-600 transition-colors duration-200 px-4 py-2 text-left font-medium"
+                    >
+                      Dashboard
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2 text-left"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -311,7 +311,7 @@ function App() {
       </section>
 
       {/* Dashboard Snippet for Logged In Users */}
-      {isLoggedIn && currentPage === 'home' && (
+      {isLoggedIn && (
         <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
@@ -496,31 +496,31 @@ function App() {
 
       {/* CTA Section */}
       {!isLoggedIn && (
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-            Ready to Get Organized?
-          </h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of professionals who have transformed their productivity with TaskFlow. 
-            Start your free trial today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button 
-              onClick={() => handleNavigation('signup')}
-              className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium text-lg w-full sm:w-auto"
-            >
-              Sign Up Free
-            </button>
-            <button 
-              onClick={() => handleNavigation('login')}
-              className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-3 text-lg"
-            >
-              Already have an account? Login →
-            </button>
+        <section className="bg-slate-50 py-20">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
+              Ready to Get Organized?
+            </h2>
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+              Join thousands of professionals who have transformed their productivity with TaskFlow. 
+              Start your free trial today.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button 
+                onClick={() => handleNavigation('signup')}
+                className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium text-lg w-full sm:w-auto"
+              >
+                Sign Up Free
+              </button>
+              <button 
+                onClick={() => handleNavigation('login')}
+                className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-3 text-lg"
+              >
+                Already have an account? Login →
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       {/* Footer */}
