@@ -298,12 +298,12 @@ function App() {
                 {isLoggedIn ? 'Go to Dashboard' : 'Get Started Free'}
               </button>
               {!isLoggedIn && (
-              <button 
-                onClick={() => handleNavigation('login')}
-                className="border-2 border-blue-500 text-blue-500 px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors duration-200 font-medium text-lg w-full sm:w-auto"
-              >
-                Login
-              </button>
+                <button 
+                  onClick={() => handleNavigation('login')}
+                  className="border-2 border-blue-500 text-blue-500 px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors duration-200 font-medium text-lg w-full sm:w-auto"
+                >
+                  Login
+                </button>
               )}
             </div>
           </div>
@@ -311,7 +311,7 @@ function App() {
       </section>
 
       {/* Dashboard Snippet for Logged In Users */}
-      {isLoggedIn && (
+      {isLoggedIn && currentPage === 'home' && (
         <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
@@ -435,7 +435,7 @@ function App() {
       )}
 
       {/* Features Section */}
-      <section id="features" className={`${isLoggedIn ? 'py-12 bg-slate-50' : 'py-20 bg-white'}`}>
+      <section id="features" className={`${isLoggedIn && currentPage === 'home' ? 'py-12 bg-slate-50' : 'py-20 bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
@@ -448,7 +448,7 @@ function App() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1 */}
-            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn ? 'bg-white' : ''}`}>
+            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn && currentPage === 'home' ? 'bg-white' : ''}`}>
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-blue-500" />
               </div>
@@ -459,7 +459,7 @@ function App() {
             </div>
 
             {/* Feature 2 */}
-            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn ? 'bg-white' : ''}`}>
+            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn && currentPage === 'home' ? 'bg-white' : ''}`}>
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8 text-blue-500" />
               </div>
@@ -470,7 +470,7 @@ function App() {
             </div>
 
             {/* Feature 3 */}
-            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn ? 'bg-white' : ''}`}>
+            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn && currentPage === 'home' ? 'bg-white' : ''}`}>
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-blue-500" />
               </div>
@@ -481,7 +481,7 @@ function App() {
             </div>
 
             {/* Feature 4 */}
-            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn ? 'bg-white' : ''}`}>
+            <div className={`text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300 ${isLoggedIn && currentPage === 'home' ? 'bg-white' : ''}`}>
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BarChart3 className="h-8 w-8 text-blue-500" />
               </div>
