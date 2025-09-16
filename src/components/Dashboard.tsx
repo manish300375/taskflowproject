@@ -25,6 +25,7 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'all-tasks' | 'profile'>('dashboard');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -63,7 +64,10 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
 
   const loadTasks = async () => {
     try {
-      const { data, error } = await taskHelpers.getRecentTasks(6);
+      // Load more tasks if viewing all tasks, otherwise just recent tasks
+      const { data, error } = currentView === 'all-tasks' 
+        ? await taskHelpers.getTasks()
+        : await taskHelpers.getRecentTasks(6);
       if (error) {
         setError('Failed to load tasks');
         console.error('Error loading tasks:', error);
@@ -307,15 +311,29 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
               <button onClick={onNavigateHome} className="text-gray-600 hover:text-blue-500 transition-colors duration-200">
                 Home
               </button>
-              <a href="#dashboard" className="text-blue-500 font-medium border-b-2 border-blue-500 pb-1">
+              <button className="text-blue-500 font-medium border-b-2 border-blue-500 pb-1">
                 Dashboard
-              </a>
-              <a href="#tasks" className="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+              </button>
+              <button 
+                onClick={() => setCurrentView('all-tasks')}
+                className={`transition-colors duration-200 ${
+                  currentView === 'all-tasks' 
+                    ? 'text-blue-500 font-medium border-b-2 border-blue-500 pb-1' 
+                    : 'text-gray-600 hover:text-blue-500'
+                }`}
+              >
                 All Tasks
-              </a>
-              <a href="#profile" className="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+              </button>
+              <button 
+                onClick={() => setCurrentView('profile')}
+                className={`transition-colors duration-200 ${
+                  currentView === 'profile' 
+                    ? 'text-blue-500 font-medium border-b-2 border-blue-500 pb-1' 
+                    : 'text-gray-600 hover:text-blue-500'
+                }`}
+              >
                 Profile
-              </a>
+              </button>
             </div>
 
             {/* Desktop Logout Button */}
@@ -347,15 +365,35 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                 <button onClick={onNavigateHome} className="block px-3 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200 w-full text-left">
                   Home
                 </button>
-                <a href="#dashboard" className="block px-3 py-2 text-blue-500 font-medium">
+                <button className="block px-3 py-2 text-blue-500 font-medium w-full text-left">
                   Dashboard
-                </a>
-                <a href="#tasks" className="block px-3 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentView('all-tasks');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block px-3 py-2 transition-colors duration-200 w-full text-left ${
+                    currentView === 'all-tasks' 
+                      ? 'text-blue-500 font-medium' 
+                      : 'text-gray-600 hover:text-blue-500'
+                  }`}
+                >
                   All Tasks
-                </a>
-                <a href="#profile" className="block px-3 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentView('profile');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block px-3 py-2 transition-colors duration-200 w-full text-left ${
+                    currentView === 'profile' 
+                      ? 'text-blue-500 font-medium' 
+                      : 'text-gray-600 hover:text-blue-500'
+                  }`}
+                >
                   Profile
-                </a>
+                </button>
                 <button 
                   onClick={onLogout}
                   className="flex items-center space-x-2 w-full text-left px-3 py-2 text-gray-600 hover:text-red-500 transition-colors duration-200"
@@ -373,8 +411,16 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-lg text-gray-600">Welcome back, {userName}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {currentView === 'dashboard' && 'Dashboard'}
+            {currentView === 'all-tasks' && 'All Tasks'}
+            {currentView === 'profile' && 'Profile'}
+          </h1>
+          <p className="text-lg text-gray-600">
+            {currentView === 'dashboard' && `Welcome back, ${userName}`}
+            {currentView === 'all-tasks' && 'Manage all your tasks'}
+            {currentView === 'profile' && 'Your account settings'}
+          </p>
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-red-500" />
