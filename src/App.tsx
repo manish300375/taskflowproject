@@ -46,9 +46,10 @@ function App() {
         setUser(session.user);
         setIsLoggedIn(true);
         loadUserData();
-        // Only redirect to dashboard after successful login, not on page refresh
+        // Don't auto-redirect to dashboard - let user stay on current page
+        // Only redirect if they're on login/signup pages
         if (currentPage === 'login' || currentPage === 'signup') {
-          setCurrentPage('dashboard');
+          setCurrentPage('home');
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
