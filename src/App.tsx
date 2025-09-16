@@ -113,7 +113,7 @@ function App() {
   };
 
   const handleLogin = () => {
-    handleNavigation('dashboard');
+    handleNavigation('home');
   };
 
   const handleLogout = async () => {
