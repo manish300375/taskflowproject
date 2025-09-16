@@ -128,6 +128,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
+              <a href="#home" onClick={(e) => { e.preventDefault(); onLogout(); }} className="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                Home
+              </a>
               <a href="#dashboard" className="text-blue-500 font-medium border-b-2 border-blue-500 pb-1">
                 Dashboard
               </a>
@@ -165,6 +168,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {isMobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-gray-100">
               <div className="px-2 pt-2 pb-3 space-y-1">
+                <a href="#home" onClick={(e) => { e.preventDefault(); onLogout(); }} className="block px-3 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                  Home
+                </a>
                 <a href="#dashboard" className="block px-3 py-2 text-blue-500 font-medium">
                   Dashboard
                 </a>
