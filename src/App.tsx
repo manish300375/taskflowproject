@@ -179,7 +179,7 @@ function App() {
 
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              {!isLoggedIn ? (<button 
+              {!isLoggedIn ? (
                <>
                  <button 
                    onClick={() => handleNavigation('login')}
@@ -211,33 +211,6 @@ function App() {
                </>
              )}
            </div>
-                onClick={() => handleNavigation('login')}
-                className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
-              >
-                Login
-              </button>
-              <button 
-                onClick={() => handleNavigation('signup')}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
-              >
-                Sign Up
-              </button>) : (
-              <>
-                <button 
-                  onClick={() => handleNavigation('dashboard')}
-                  className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2"
-                >
-                  Dashboard
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-red-500 transition-colors duration-200 px-4 py-2"
-                >
-                  Logout
-                </button>
-              </>)}
-              </button>
-            </div>
 
             {/* Mobile menu button */}
             <div className="md:hidden">
@@ -263,7 +236,8 @@ function App() {
                 <a href="#contact" className="block px-3 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200">
                   Contact
                 </a>
-                {!isLoggedIn ? (<div className="flex flex-col space-y-2 px-3 pt-4">
+                {!isLoggedIn ? (
+                <div className="flex flex-col space-y-2 px-3 pt-4">
                   <button 
                     onClick={() => handleNavigation('login')}
                     className="text-gray-600 hover:text-blue-500 transition-colors duration-200 px-4 py-2 text-left"
