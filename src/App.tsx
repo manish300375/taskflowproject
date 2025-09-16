@@ -22,19 +22,26 @@ function App() {
   // Check authentication state on app load
   React.useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔍 Checking auth state...');
       const { user } = await authHelpers.getCurrentUser();
+      console.log('👤 Current user:', user);
       if (user) {
+        console.log('✅ User found, setting logged in state');
         setUser(user);
         setIsLoggedIn(true);
         await loadUserData();
+      } else {
+        console.log('❌ No user found');
       }
       setIsLoading(false);
+      console.log('🏁 Auth check complete');
     };
 
     checkAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = authHelpers.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user ? 'User present' : 'No user');
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         setIsLoggedIn(true);
@@ -55,6 +62,7 @@ function App() {
   }, []);
 
   const loadUserData = async () => {
+    console.log('📊 Loading user data...');
     try {
       // Load recent tasks
       const { data: tasks } = await taskHelpers.getRecentTasks(3);
@@ -63,19 +71,27 @@ function App() {
       // Load task statistics
       const { data: stats } = await taskHelpers.getTaskStats();
       setTaskStats(stats || { total: 0, completed: 0, pending: 0 });
+      console.log('✅ User data loaded successfully');
     } catch (error) {
       console.error('Error loading user data:', error);
     }
   };
 
   const clearUserData = () => {
+    console.log('🧹 Clearing user data...');
     setRecentTasks([]);
     setTaskStats({ total: 0, completed: 0, pending: 0 });
   };
 
   // Debug logging to see what's happening
   React.useEffect(() => {
-    console.log('Auth state:', { isLoggedIn, user: !!user, currentPage, isLoading });
+    console.log('🔍 Auth state update:', { 
+      isLoggedIn, 
+      hasUser: !!user, 
+      currentPage, 
+      isLoading,
+      userEmail: user?.email 
+    });
   }, [isLoggedIn, user, currentPage, isLoading]);
 
   const formatDate = (dateString: string) => {
