@@ -26,6 +26,8 @@ interface DashboardProps {
 export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskStats, setTaskStats] = useState({
     total: 0,
@@ -35,7 +37,15 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [newTask, setNewTask] = useState<CreateTaskData>({
+    title: '',
+    description: '',
+    due_date: '',
+    priority: 'medium',
+    status: 'pending'
+  });
+  const [editTask, setEditTask] = useState<CreateTaskData>({
     title: '',
     description: '',
     due_date: '',
@@ -178,6 +188,76 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewTask(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditTask(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setEditTask({
+      title: task.title,
+      description: task.description || '',
+      due_date: task.due_date || '',
+      priority: task.priority,
+      status: task.status
+    });
+    setIsEditTaskModalOpen(true);
+  };
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingTask || !editTask.title.trim()) {
+      setError('Task title is required');
+      return;
+    }
+
+    setIsUpdating(true);
+    setError(null);
+
+    try {
+      const updateData = {
+        title: editTask.title.trim(),
+        description: editTask.description?.trim() || undefined,
+        due_date: editTask.due_date || undefined,
+        priority: editTask.priority,
+        status: editTask.status
+      };
+
+      const { data, error } = await taskHelpers.updateTask(editingTask.id, updateData);
+      
+      if (error) {
+        console.error('Error updating task:', error);
+        setError('Failed to update task');
+      } else {
+        // Update local state
+        setTasks(tasks.map(task => 
+          task.id === editingTask.id ? { ...task, ...data } : task
+        ));
+        
+        // Reset form and close modal
+        setEditTask({
+          title: '',
+          description: '',
+          due_date: '',
+          priority: 'medium',
+          status: 'pending'
+        });
+        setEditingTask(null);
+        setIsEditTaskModalOpen(false);
+        
+        // Reload stats in case status changed
+        loadTaskStats();
+      }
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError('Failed to update task');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -408,6 +488,7 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                     <button
                       className="p-2 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                       title="Edit task"
+                      onClick={() => handleEditTask(task)}
                     >
                       <Edit3 className="h-4 w-4" />
                     </button>
@@ -549,6 +630,135 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                 >
                   <Save className="h-4 w-4" />
                   <span>{isSubmitting ? 'Creating...' : 'Create Task'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {isEditTaskModalOpen && editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Edit Task</h3>
+                <button
+                  onClick={() => {
+                    setIsEditTaskModalOpen(false);
+                    setEditingTask(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateTask} className="px-6 py-4 space-y-4">
+              {/* Title Field */}
+              <div>
+                <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Task Title *
+                </label>
+                <input
+                  id="edit-title"
+                  name="title"
+                  type="text"
+                  required
+                  value={editTask.title}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  placeholder="Enter task title"
+                />
+              </div>
+
+              {/* Description Field */}
+              <div>
+                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="edit-description"
+                  name="description"
+                  rows={3}
+                  value={editTask.description}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  placeholder="Enter task description (optional)"
+                />
+              </div>
+
+              {/* Due Date Field */}
+              <div>
+                <label htmlFor="edit-due_date" className="block text-sm font-medium text-gray-700 mb-2">
+                  Due Date
+                </label>
+                <input
+                  id="edit-due_date"
+                  name="due_date"
+                  type="date"
+                  value={editTask.due_date}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                />
+              </div>
+
+              {/* Priority Field */}
+              <div>
+                <label htmlFor="edit-priority" className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  id="edit-priority"
+                  name="priority"
+                  value={editTask.priority}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              {/* Status Field */}
+              <div>
+                <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  id="edit-status"
+                  name="status"
+                  value={editTask.status}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditTaskModalOpen(false);
+                    setEditingTask(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating || !editTask.title.trim()}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{isUpdating ? 'Updating...' : 'Update Task'}</span>
                 </button>
               </div>
             </form>
