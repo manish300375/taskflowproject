@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { authHelpers } from '../lib/supabase';
 
 interface LoginPageProps {
   onBack: () => void;
@@ -56,14 +57,35 @@ export default function LoginPage({ onBack, onSignUp, onLogin }: LoginPageProps)
 
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      // Handle successful login here
-      console.log('Login successful:', formData);
-      onLogin();
+      const { data, error } = await authHelpers.signIn(
+        formData.email,
+        formData.password
+      );
+
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes('Invalid login credentials')) {
+          setErrors({ 
+            email: 'Invalid email or password',
+            password: 'Invalid email or password'
+          });
+        } else if (error.message.includes('Email not confirmed')) {
+          setErrors({ email: 'Please check your email and confirm your account' });
+        } else {
+          setErrors({ email: 'Login failed. Please try again.' });
+        }
+        return;
+      }
+
+      if (data.user) {
+        // Login successful
+        console.log('Login successful:', data.user);
+        onLogin();
+      }
     } catch (error) {
       console.error('Login failed:', error);
+      setErrors({ email: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }

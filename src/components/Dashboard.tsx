@@ -24,9 +24,10 @@ interface Task {
 
 interface DashboardProps {
   onLogout: () => void;
+  user?: any;
 }
 
-export default function Dashboard({ onLogout }: DashboardProps) {
+export default function Dashboard({ onLogout, user }: DashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([
     {
@@ -73,7 +74,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   ]);
 
-  const userName = 'John Doe'; // This would come from authentication context
+  const userName = user?.user_metadata?.full_name || user?.email || 'User';
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

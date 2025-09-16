@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, Clock, Users, BarChart3, Menu, X } from 'lucide-react';
+import { authHelpers } from './lib/supabase';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
 import Dashboard from './components/Dashboard';
@@ -8,6 +9,38 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState<'home' | 'login' | 'signup' | 'dashboard'>('home');
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [user, setUser] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  // Check authentication state on app load
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const { user } = await authHelpers.getCurrentUser();
+      if (user) {
+        setUser(user);
+        setIsLoggedIn(true);
+        setCurrentPage('dashboard');
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = authHelpers.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        setIsLoggedIn(true);
+        setCurrentPage('dashboard');
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsLoggedIn(false);
+        setCurrentPage('home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -23,14 +56,32 @@ function App() {
     handleNavigation('dashboard');
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    handleNavigation('home');
+  const handleLogout = async () => {
+    try {
+      await authHelpers.signOut();
+      setUser(null);
+      setIsLoggedIn(false);
+      handleNavigation('home');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <CheckCircle className="h-8 w-8 text-blue-500 animate-spin" />
+          <span className="text-lg text-gray-600">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (currentPage === 'dashboard') {
     return (
-      <Dashboard onLogout={handleLogout} />
+      <Dashboard onLogout={handleLogout} user={user} />
     );
   }
 

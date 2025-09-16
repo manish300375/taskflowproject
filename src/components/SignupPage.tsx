@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { authHelpers } from '../lib/supabase';
 
 interface SignupPageProps {
   onBack: () => void;
@@ -85,14 +86,33 @@ export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProp
 
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      // Handle successful signup here
-      console.log('Signup successful:', formData);
-      onSignUp();
+      const { data, error } = await authHelpers.signUp(
+        formData.email,
+        formData.password,
+        formData.fullName
+      );
+
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered')) {
+          setErrors({ email: 'An account with this email already exists' });
+        } else if (error.message.includes('Password')) {
+          setErrors({ password: error.message });
+        } else {
+          setErrors({ email: 'Failed to create account. Please try again.' });
+        }
+        return;
+      }
+
+      if (data.user) {
+        // Account created successfully
+        console.log('Signup successful:', data.user);
+        onSignUp();
+      }
     } catch (error) {
       console.error('Signup failed:', error);
+      setErrors({ email: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }
