@@ -435,129 +435,276 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
           )}
         </div>
 
-        {/* Quick Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <BarChart3 className="h-6 w-6 text-blue-500" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">{taskStats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-green-100 p-3 rounded-full">
-                <CheckCircle className="h-6 w-6 text-green-500" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{taskStats.completed}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <Clock className="h-6 w-6 text-yellow-500" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{taskStats.pending}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Add New Task Button */}
-        <div className="mb-8">
-          <button 
-            onClick={() => setIsAddTaskModalOpen(true)}
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add New Task</span>
-          </button>
-        </div>
-
-        {/* Recent Tasks Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Tasks</h2>
-          </div>
-          
-          <div className="divide-y divide-gray-100">
-            {tasks.map((task) => (
-              <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className={`font-medium ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                        {task.title}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
+          {/* Profile View */}
+          {currentView === 'profile' && (
+            <div className="space-y-8">
+              {/* User Information Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900">Account Information</h2>
+                </div>
+                <div className="px-6 py-6">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="bg-blue-100 p-4 rounded-full">
+                      <User className="h-8 w-8 text-blue-500" />
                     </div>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <div className="flex items-center space-x-1 text-sm text-gray-500">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(task.due_date || '')}</span>
-                      </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        task.status === 'completed' 
-                          ? 'text-green-600 bg-green-50' 
-                          : 'text-yellow-600 bg-yellow-50'
-                      }`}>
-                        {task.status === 'completed' ? 'Completed' : 'Pending'}
-                      </span>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">{userName}</h3>
+                      <p className="text-gray-600">{user?.email}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button
-                      onClick={() => handleTaskComplete(task.id, task.status)}
-                      className={`p-2 rounded-lg transition-colors duration-200 ${
-                        task.status === 'completed'
-                          ? 'text-green-600 hover:bg-green-50'
-                          : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
-                      }`}
-                      title={task.status === 'completed' ? 'Mark as pending' : 'Mark as complete'}
-                    >
-                      <Check className="h-4 w-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name
+                      </label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {user?.user_metadata?.full_name || 'Not provided'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {user?.email}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Account Created
+                      </label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Unknown'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Sign In
+                      </label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Unknown'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Task Statistics Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900">Task Statistics</h2>
+                </div>
+                <div className="px-6 py-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                        <BarChart3 className="h-8 w-8 text-blue-500" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">{taskStats.total}</p>
+                      <p className="text-sm text-gray-600">Total Tasks</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle className="h-8 w-8 text-green-500" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">{taskStats.completed}</p>
+                      <p className="text-sm text-gray-600">Completed</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-yellow-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                        <Clock className="h-8 w-8 text-yellow-500" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">{taskStats.pending}</p>
+                      <p className="text-sm text-gray-600">Pending</p>
+                    </div>
+                  </div>
+                  
+                  {/* Completion Rate */}
+                  <div className="mt-8 pt-6 border-t border-gray-100">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-2">Completion Rate</p>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div 
+                          className="bg-green-500 h-3 rounded-full transition-all duration-300"
+                          style={{ 
+                            width: `${taskStats.total > 0 ? (taskStats.completed / taskStats.total) * 100 : 0}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {taskStats.total > 0 ? Math.round((taskStats.completed / taskStats.total) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Actions Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900">Account Actions</h2>
+                </div>
+                <div className="px-6 py-6">
+                  <div className="space-y-4">
+                    <button className="w-full md:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium">
+                      Update Profile
                     </button>
-                    <button
-                      className="p-2 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-                      title="Edit task"
-                      onClick={() => handleEditTask(task)}
-                    >
-                      <Edit3 className="h-4 w-4" />
+                    <button className="w-full md:w-auto ml-0 md:ml-4 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                      Change Password
                     </button>
-                    <button
-                      onClick={() => handleTaskDelete(task.id)}
-                      className="p-2 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
-                      title="Delete task"
+                    <button 
+                      onClick={onLogout}
+                      className="w-full md:w-auto ml-0 md:ml-4 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          {tasks.length === 0 && !isLoading && (
-            <div className="px-6 py-12 text-center">
-              <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No tasks yet. Create your first task to get started!</p>
             </div>
           )}
-        </div>
+
+          {/* Dashboard and All Tasks Views */}
+          {(currentView === 'dashboard' || currentView === 'all-tasks') && (
+            <>
+              {/* Quick Stats Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 p-3 rounded-full">
+                      <BarChart3 className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+                      <p className="text-2xl font-bold text-gray-900">{taskStats.total}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                  <div className="flex items-center">
+                    <div className="bg-green-100 p-3 rounded-full">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Completed</p>
+                      <p className="text-2xl font-bold text-gray-900">{taskStats.completed}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                  <div className="flex items-center">
+                    <div className="bg-yellow-100 p-3 rounded-full">
+                      <Clock className="h-6 w-6 text-yellow-500" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Pending</p>
+                      <p className="text-2xl font-bold text-gray-900">{taskStats.pending}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New Task Button */}
+              <div className="mb-8">
+                <button 
+                  onClick={() => setIsAddTaskModalOpen(true)}
+                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center space-x-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Add New Task</span>
+                </button>
+              </div>
+
+              {/* Tasks Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {currentView === 'dashboard' ? 'Recent Tasks' : 'All Tasks'}
+                  </h2>
+                </div>
+                
+                <div className="divide-y divide-gray-100">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <h3 className={`font-medium ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                              {task.title}
+                            </h3>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>
+                              {task.priority}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4 mt-2">
+                            <div className="flex items-center space-x-1 text-sm text-gray-500">
+                              <Calendar className="h-4 w-4" />
+                              <span>{formatDate(task.due_date || '')}</span>
+                            </div>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              task.status === 'completed' 
+                                ? 'text-green-600 bg-green-50' 
+                                : 'text-yellow-600 bg-yellow-50'
+                            }`}>
+                              {task.status === 'completed' ? 'Completed' : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => handleTaskComplete(task.id, task.status)}
+                            className={`p-2 rounded-lg transition-colors duration-200 ${
+                              task.status === 'completed'
+                                ? 'text-green-600 hover:bg-green-50'
+                                : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
+                            }`}
+                            title={task.status === 'completed' ? 'Mark as pending' : 'Mark as complete'}
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="p-2 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                            title="Edit task"
+                            onClick={() => handleEditTask(task)}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleTaskDelete(task.id)}
+                            className="p-2 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
+                            title="Delete task"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {tasks.length === 0 && !isLoading && (
+                  <div className="px-6 py-12 text-center">
+                    <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No tasks yet. Create your first task to get started!</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
       </main>
 
       {/* Add Task Modal */}
