@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { taskHelpers } from '../lib/database';
+import { taskHelpers, subtaskHelpers, aiHelpers } from '../lib/database';
 import { 
   CheckCircle, 
   Clock, 
@@ -20,6 +20,34 @@ import {
   ChevronUp
 } from 'lucide-react';
 
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+  status: 'pending' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  updated_at: string;
+}
+
+interface Subtask {
+  id: string;
+  parent_task_id: string;
+  title: string;
+  status: 'pending' | 'completed';
+  created_at: string;
+  updated_at: string;
+}
+
+interface CreateTaskData {
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'completed';
+}
+
 interface DashboardProps {
   onLogout: () => void;
   onNavigateHome: () => void;
@@ -33,6 +61,10 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [subtasks, setSubtasks] = useState<Record<string, Subtask[]>>({});
+  const [suggestedSubtasks, setSuggestedSubtasks] = useState<Record<string, string[]>>({});
+  const [generatingSubtasks, setGeneratingSubtasks] = useState<Set<string>>(new Set());
   const [taskStats, setTaskStats] = useState({
     total: 0,
     completed: 0,
@@ -64,6 +96,111 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
     loadTasks();
     loadTaskStats();
   }, [currentView]);
+
+  const toggleTaskExpansion = async (taskId: string) => {
+    const newExpandedTasks = new Set(expandedTasks);
+    
+    if (expandedTasks.has(taskId)) {
+      newExpandedTasks.delete(taskId);
+    } else {
+      newExpandedTasks.add(taskId);
+      // Load subtasks when expanding
+      if (!subtasks[taskId]) {
+        try {
+          const { data, error } = await subtaskHelpers.getSubtasks(taskId);
+          if (error) {
+            console.error('Error loading subtasks:', error);
+          } else {
+            setSubtasks(prev => ({ ...prev, [taskId]: data || [] }));
+          }
+        } catch (err) {
+          console.error('Error loading subtasks:', err);
+        }
+      }
+    }
+    
+    setExpandedTasks(newExpandedTasks);
+  };
+
+  const handleGenerateSubtasks = async (taskId: string, taskTitle: string) => {
+    setGeneratingSubtasks(prev => new Set(prev).add(taskId));
+    setError(null);
+
+    try {
+      const { data, error } = await aiHelpers.generateSubtasks(taskTitle);
+      if (error) {
+        console.error('Error generating subtasks:', error);
+        setError('Failed to generate subtasks');
+      } else {
+        setSuggestedSubtasks(prev => ({ ...prev, [taskId]: data || [] }));
+      }
+    } catch (err) {
+      console.error('Error generating subtasks:', err);
+      setError('Failed to generate subtasks');
+    } finally {
+      setGeneratingSubtasks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleSaveSubtask = async (taskId: string, subtaskTitle: string) => {
+    try {
+      const { data, error } = await subtaskHelpers.createSubtask({
+        parent_task_id: taskId,
+        title: subtaskTitle,
+        status: 'pending'
+      });
+      
+      if (error) {
+        console.error('Error saving subtask:', error);
+        setError('Failed to save subtask');
+      } else {
+        // Update local subtasks state
+        setSubtasks(prev => ({
+          ...prev,
+          [taskId]: [...(prev[taskId] || []), data]
+        }));
+        
+        // Remove from suggestions
+        setSuggestedSubtasks(prev => ({
+          ...prev,
+          [taskId]: prev[taskId]?.filter(suggestion => suggestion !== subtaskTitle) || []
+        }));
+      }
+    } catch (err) {
+      console.error('Error saving subtask:', err);
+      setError('Failed to save subtask');
+    }
+  };
+
+  const handleSubtaskComplete = async (subtaskId: string, currentStatus: 'pending' | 'completed') => {
+    try {
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+      const { data, error } = await subtaskHelpers.updateSubtask(subtaskId, { status: newStatus });
+      
+      if (error) {
+        console.error('Error updating subtask:', error);
+        setError('Failed to update subtask');
+      } else {
+        // Update local subtasks state
+        setSubtasks(prev => {
+          const updated = { ...prev };
+          Object.keys(updated).forEach(taskId => {
+            updated[taskId] = updated[taskId].map(subtask =>
+              subtask.id === subtaskId ? { ...subtask, status: newStatus } : subtask
+            );
+          });
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Error updating subtask:', err);
+      setError('Failed to update subtask');
+    }
+  };
 
   const loadTasks = async () => {
     try {
