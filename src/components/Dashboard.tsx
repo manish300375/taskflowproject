@@ -13,9 +13,11 @@ import {
   Menu,
   X,
   AlertCircle,
-  Save
+  Save,
+  Sparkles,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import { taskHelpers, Task, CreateTaskData } from '../lib/database';
 
 interface DashboardProps {
   onLogout: () => void;
