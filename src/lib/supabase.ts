@@ -57,8 +57,8 @@ export const profileHelpers = {
   uploadAvatar: async (userId: string, file: File) => {
     // Ensure file extension is lowercase and valid
     const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExt || !['jpg', 'jpeg', 'png', 'webp'].includes(fileExt)) {
-      throw new Error('Invalid file format. Please use JPG, PNG, or WebP.');
+    if (!fileExt || !['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(fileExt)) {
+      throw new Error('Invalid file format. Please use JPG, JPEG, PNG, WebP, or PDF.');
     }
     
     const fileName = `avatars/${userId}-${Date.now()}.${fileExt}`;

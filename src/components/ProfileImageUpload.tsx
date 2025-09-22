@@ -32,12 +32,12 @@ export default function ProfileImageUpload({
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const ACCEPTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const ACCEPTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_FORMATS.includes(file.type)) {
-      return 'Please upload a JPG, PNG, or WebP image file.';
+      return 'Please upload a JPG, JPEG, PNG, WebP, or PDF file.';
     }
     
     if (file.size > MAX_FILE_SIZE) {
@@ -215,7 +215,7 @@ export default function ProfileImageUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".jpg,.jpeg,.png,.webp"
+          accept=".jpg,.jpeg,.png,.webp,.pdf"
           onChange={handleFileInputChange}
           className="hidden"
           disabled={uploadState.isUploading}
@@ -253,7 +253,7 @@ export default function ProfileImageUpload({
                 </button>
               </p>
               <p className="text-xs text-gray-500">
-                JPG, PNG, WebP up to 5MB
+                JPG, JPEG, PNG, WebP, PDF up to 5MB
               </p>
             </div>
           </div>
@@ -301,9 +301,9 @@ export default function ProfileImageUpload({
       <div className="text-xs text-gray-500 space-y-1">
         <p className="font-medium">Requirements:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Accepted formats: JPG, PNG, WebP</li>
+          <li>Accepted formats: JPG, JPEG, PNG, WebP, PDF</li>
           <li>Maximum file size: 5MB</li>
-          <li>Recommended: Square images (1:1 ratio)</li>
+          <li>Recommended: Square images (1:1 ratio) for image files</li>
         </ul>
       </div>
     </div>
