@@ -54,6 +54,7 @@ export const authHelpers = {
 
 // Profile helper functions
 export const profileHelpers = {
+  uploadAvatar: async (userId: string, file: File) => {
     // Ensure file extension is lowercase and valid
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     if (!fileExt || !['jpg', 'jpeg', 'png', 'webp'].includes(fileExt)) {
