@@ -15,13 +15,16 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Save
+  Save,
   X,
   AlertCircle,
   Save,
   Sparkles,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  LogOut,
+  Menu,
+  User
 } from 'lucide-react';
 import { taskHelpers, subtaskHelpers, aiHelpers, Task, Subtask } from '../lib/database';
 interface Task {
@@ -817,17 +820,6 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                             >
                               {expandedTasks.has(task.id) ? (
                                 <ChevronUp className="h-4 w-4" />
-                    <div key={task.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
-                      <div className="p-6">
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => toggleTaskExpansion(task.id)}
-                              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                            >
-                              {expandedTasks.has(task.id) ? (
-                                <ChevronUp className="h-4 w-4" />
                               ) : (
                                 <ChevronDown className="h-4 w-4" />
                               )}
@@ -859,8 +851,6 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                             </button>
                           </div>
                         </div>
-                      </div>
-
                       </div>
 
                       {/* Expanded Content */}
@@ -909,7 +899,7 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                                 {subtasks[task.id].map((subtask) => (
                                   <div key={subtask.id} className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
                                     <button
-                                      onClick={() => handleSubtaskComplete(subtask.id, subtask.status, task.id)}
+                                      onClick={() => handleSubtaskComplete(subtask.id, subtask.status)}
                                       className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-200 ${
                                         subtask.status === 'completed'
                                           ? 'bg-green-500 border-green-500 text-white'
@@ -939,86 +929,6 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                               </div>
                             </div>
                           )}
-                        </div>
-                      )}
-                    </div>
-                      {/* Expanded Task Content */}
-                      {expandedTasks.has(task.id) && (
-                        <div className="px-6 pb-4 border-t border-gray-100 bg-gray-50">
-                          <div className="pt-4">
-                            {/* Generate Subtasks Button */}
-                            <div className="mb-4">
-                              <button
-                                onClick={() => handleGenerateSubtasks(task.id, task.title)}
-                                disabled={generatingSubtasks.has(task.id)}
-                                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <Sparkles className="h-4 w-4" />
-                                <span>
-                                  {generatingSubtasks.has(task.id) ? 'Generating...' : 'Generate Subtasks with AI'}
-                                </span>
-                              </button>
-                            </div>
-
-                            {/* AI Suggested Subtasks */}
-                            {suggestedSubtasks[task.id] && suggestedSubtasks[task.id].length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">AI Suggested Subtasks:</h4>
-                                <div className="space-y-2">
-                                  {suggestedSubtasks[task.id].map((suggestion, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
-                                      <span className="text-sm text-gray-700">{suggestion}</span>
-                                      <button
-                                        onClick={() => handleSaveSubtask(task.id, suggestion)}
-                                        className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition-colors duration-200 font-medium"
-                                      >
-                                        Save
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Existing Subtasks */}
-                            {subtasks[task.id] && subtasks[task.id].length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Subtasks:</h4>
-                                <div className="space-y-2">
-                                  {subtasks[task.id].map((subtask) => (
-                                    <div key={subtask.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
-                                      <div className="flex items-center space-x-3">
-                                        <button
-                                          onClick={() => handleSubtaskComplete(subtask.id, subtask.status)}
-                                          className={`p-1 rounded transition-colors duration-200 ${
-                                            subtask.status === 'completed'
-                                              ? 'text-green-600 hover:bg-green-50'
-                                              : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
-                                          }`}
-                                        >
-                                          <Check className="h-3 w-3" />
-                                        </button>
-                                        <span className={`text-sm ${
-                                          subtask.status === 'completed' 
-                                            ? 'text-gray-500 line-through' 
-                                            : 'text-gray-700'
-                                        }`}>
-                                          {subtask.title}
-                                        </span>
-                                      </div>
-                                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                        subtask.status === 'completed' 
-                                          ? 'text-green-600 bg-green-50' 
-                                          : 'text-yellow-600 bg-yellow-50'
-                                      }`}>
-                                        {subtask.status === 'completed' ? 'Done' : 'Pending'}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
                         </div>
                       )}
                     </div>
