@@ -9,7 +9,6 @@ import {
   Check, 
   Calendar,
   BarChart3,
-  Trash2, 
   X,
   ChevronDown,
   ChevronUp,
