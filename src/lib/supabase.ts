@@ -66,7 +66,8 @@ export const profileHelpers = {
     const { data, error } = await supabase.storage
       .from('profile-images')
       .upload(fileName, file, {
-        cacheControl: '3600'
+        cacheControl: '3600',
+        upsert: true
       })
 
     if (error) {
