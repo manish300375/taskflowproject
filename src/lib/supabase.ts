@@ -58,10 +58,14 @@ export const profileHelpers = {
   uploadProfileImage: async (file: File, userId: string) => {
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}-${Date.now()}.${fileExt}`
-    const filePath = `avatars/${fileName}`
-
-    const { data, error } = await supabase.storage
-      .from('profile-images')
+    // Ensure file extension is lowercase and valid
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !['jpg', 'jpeg', 'png', 'webp'].includes(fileExt)) {
+      throw new Error('Invalid file format. Please use JPG, PNG, or WebP.');
+    }
+    
+    const fileName = `avatars/${user.id}-${Date.now()}.${fileExt}`;
+        cacheControl: '3600'
       .upload(filePath, file)
 
     if (error) {
