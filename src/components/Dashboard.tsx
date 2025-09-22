@@ -100,6 +100,24 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
     loadTasks();
     loadTaskStats();
   }, [currentView]);
+  // Load subtasks when tasks are expanded
+  useEffect(() => {
+    const loadSubtasksForExpandedTasks = async () => {
+      for (const taskId of expandedTasks) {
+        if (!subtasks[taskId]) {
+          const { data } = await subtaskHelpers.getSubtasks(taskId);
+          if (data) {
+            setSubtasks(prev => ({ ...prev, [taskId]: data }));
+          }
+        }
+      }
+    };
+
+    if (expandedTasks.size > 0) {
+      loadSubtasksForExpandedTasks();
+    }
+  }, [expandedTasks]);
+
 
   const toggleTaskExpansion = async (taskId: string) => {
     const newExpandedTasks = new Set(expandedTasks);
