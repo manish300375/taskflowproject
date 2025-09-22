@@ -87,7 +87,7 @@ export default function ProfileImageUpload({
         }));
       }, 100);
 
-      const { data, error } = await profileHelpers.uploadProfileImage(file, userId);
+      const { data, error } = await profileHelpers.uploadAvatar(userId, file);
       
       clearInterval(progressInterval);
 
