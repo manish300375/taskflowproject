@@ -54,8 +54,6 @@ export const authHelpers = {
 
 // Profile helper functions
 export const profileHelpers = {
-  // Upload profile image to Supabase storage
-  uploadProfileImage: async (file: File, userId: string) => {
     // Ensure file extension is lowercase and valid
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     if (!fileExt || !['jpg', 'jpeg', 'png', 'webp'].includes(fileExt)) {
