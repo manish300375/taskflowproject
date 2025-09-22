@@ -9,9 +9,13 @@ import {
   Check, 
   Calendar,
   BarChart3,
-  User,
-  LogOut,
-  Menu,
+  Edit3, 
+  Trash2, 
+  X,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Save
   X,
   AlertCircle,
   Save,
@@ -19,7 +23,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-
+import { taskHelpers, subtaskHelpers, aiHelpers, Task, Subtask } from '../lib/database';
 interface Task {
   id: string;
   title: string;
