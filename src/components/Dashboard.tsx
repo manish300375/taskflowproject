@@ -17,6 +17,7 @@ import {
   Save
 } from 'lucide-react';
 import { taskHelpers, subtaskHelpers, aiHelpers, Task, Subtask, CreateTaskData, UpdateTaskData } from '../lib/database';
+import ProfileSection from './ProfileSection';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -25,6 +26,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardProps) {
+  const [currentView, setCurrentView] = useState<'tasks' | 'profile'>('tasks');
+  const [currentUser, setCurrentUser] = useState(user);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [subtasks, setSubtasks] = useState<{ [taskId: string]: Subtask[] }>({});
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -59,6 +62,9 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
     loadTaskStats();
   }, []);
 
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
   const loadTasks = async () => {
     setIsLoading(true);
     try {
@@ -273,6 +279,9 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
     });
   };
 
+  const handleUserUpdate = (updatedUser: any) => {
+    setCurrentUser(updatedUser);
+  };
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No due date';
     const date = new Date(dateString);
@@ -319,7 +328,28 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                 <span className="text-xl font-bold text-gray-900">TaskFlow</span>
               </div>
               <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Dashboard</span>
+              <nav className="flex space-x-6">
+                <button
+                  onClick={() => setCurrentView('tasks')}
+                  className={`text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'tasks' 
+                      ? 'text-blue-600 border-b-2 border-blue-600 pb-4' 
+                      : 'text-gray-600 hover:text-blue-500'
+                  }`}
+                >
+                  Tasks
+                </button>
+                <button
+                  onClick={() => setCurrentView('profile')}
+                  className={`text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'profile' 
+                      ? 'text-blue-600 border-b-2 border-blue-600 pb-4' 
+                      : 'text-gray-600 hover:text-blue-500'
+                  }`}
+                >
+                  Profile
+                </button>
+              </nav>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -331,9 +361,18 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                 <span>Home</span>
               </button>
               <span className="text-gray-300">|</span>
-              <span className="text-gray-600">
-                {user?.user_metadata?.full_name || user?.email || 'User'}
-              </span>
+              <div className="flex items-center space-x-2">
+                {currentUser?.user_metadata?.avatar_url && (
+                  <img
+                    src={currentUser.user_metadata.avatar_url}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                <span className="text-gray-600">
+                  {currentUser?.user_metadata?.full_name || currentUser?.email || 'User'}
+                </span>
+              </div>
               <button
                 onClick={onLogout}
                 className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors duration-200"
@@ -348,6 +387,10 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {currentView === 'profile' ? (
+          <ProfileSection user={currentUser} onUserUpdate={handleUserUpdate} />
+        ) : (
+          <>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
@@ -712,6 +755,8 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
             ))
           )}
         </div>
+          </>
+        )}
       </main>
     </div>
   );
