@@ -100,24 +100,6 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
     loadTasks();
     loadTaskStats();
   }, [currentView]);
-  // Load subtasks when tasks are expanded
-  useEffect(() => {
-    const loadSubtasksForExpandedTasks = async () => {
-      for (const taskId of expandedTasks) {
-        if (!subtasks[taskId]) {
-          const { data } = await subtaskHelpers.getSubtasks(taskId);
-          if (data) {
-            setSubtasks(prev => ({ ...prev, [taskId]: data }));
-          }
-        }
-      }
-    };
-
-    if (expandedTasks.size > 0) {
-      loadSubtasksForExpandedTasks();
-    }
-  }, [expandedTasks]);
-
 
   const toggleTaskExpansion = async (taskId: string) => {
     const newExpandedTasks = new Set(expandedTasks);
@@ -835,6 +817,17 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                             >
                               {expandedTasks.has(task.id) ? (
                                 <ChevronUp className="h-4 w-4" />
+                    <div key={task.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                      <div className="p-6">
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => toggleTaskExpansion(task.id)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                            >
+                              {expandedTasks.has(task.id) ? (
+                                <ChevronUp className="h-4 w-4" />
                               ) : (
                                 <ChevronDown className="h-4 w-4" />
                               )}
@@ -868,6 +861,87 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                         </div>
                       </div>
 
+                      </div>
+
+                      {/* Expanded Content */}
+                      {expandedTasks.has(task.id) && (
+                        <div className="border-t border-gray-100 p-6 bg-gray-50">
+                          {/* Generate Subtasks Button */}
+                          <div className="mb-4">
+                            <button
+                              onClick={() => handleGenerateSubtasks(task.id, task.title)}
+                              disabled={generatingSubtasks.has(task.id)}
+                              className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                              <span>
+                                {generatingSubtasks.has(task.id) ? 'Generating...' : 'Generate Subtasks with AI'}
+                              </span>
+                            </button>
+                          </div>
+
+                          {/* AI Suggestions */}
+                          {suggestedSubtasks[task.id] && suggestedSubtasks[task.id].length > 0 && (
+                            <div className="mb-6">
+                              <h4 className="text-sm font-medium text-gray-700 mb-3">AI Suggestions:</h4>
+                              <div className="space-y-2">
+                                {suggestedSubtasks[task.id].map((suggestion, index) => (
+                                  <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                                    <span className="text-gray-700 flex-1">{suggestion}</span>
+                                    <button
+                                      onClick={() => handleSaveSubtask(task.id, suggestion)}
+                                      className="flex items-center space-x-1 bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors duration-200"
+                                    >
+                                      <Save className="h-3 w-3" />
+                                      <span>Save</span>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Existing Subtasks */}
+                          {subtasks[task.id] && subtasks[task.id].length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-3">Subtasks:</h4>
+                              <div className="space-y-2">
+                                {subtasks[task.id].map((subtask) => (
+                                  <div key={subtask.id} className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
+                                    <button
+                                      onClick={() => handleSubtaskComplete(subtask.id, subtask.status, task.id)}
+                                      className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-200 ${
+                                        subtask.status === 'completed'
+                                          ? 'bg-green-500 border-green-500 text-white'
+                                          : 'border-gray-300 hover:border-green-500'
+                                      }`}
+                                    >
+                                      {subtask.status === 'completed' && (
+                                        <CheckCircle className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                    <span className={`flex-1 ${
+                                      subtask.status === 'completed' 
+                                        ? 'text-gray-500 line-through' 
+                                        : 'text-gray-700'
+                                    }`}>
+                                      {subtask.title}
+                                    </span>
+                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                      subtask.status === 'completed'
+                                        ? 'text-green-600 bg-green-50'
+                                        : 'text-yellow-600 bg-yellow-50'
+                                    }`}>
+                                      {subtask.status === 'completed' ? 'Done' : 'Pending'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                       {/* Expanded Task Content */}
                       {expandedTasks.has(task.id) && (
                         <div className="px-6 pb-4 border-t border-gray-100 bg-gray-50">
