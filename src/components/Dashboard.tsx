@@ -19,10 +19,7 @@ import {
   Save,
   Sparkles,
   ChevronDown,
-  ChevronUp,
   LogOut,
-  Menu,
-  User
 } from 'lucide-react';
 import { taskHelpers, subtaskHelpers, aiHelpers, Task, Subtask } from '../lib/database';
 interface Task {
