@@ -56,17 +56,19 @@ export const authHelpers = {
 export const profileHelpers = {
   // Upload profile image to Supabase storage
   uploadProfileImage: async (file: File, userId: string) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${userId}-${Date.now()}.${fileExt}`
     // Ensure file extension is lowercase and valid
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     if (!fileExt || !['jpg', 'jpeg', 'png', 'webp'].includes(fileExt)) {
       throw new Error('Invalid file format. Please use JPG, PNG, or WebP.');
     }
     
-    const fileName = `avatars/${user.id}-${Date.now()}.${fileExt}`;
+    const fileName = `avatars/${userId}-${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('profile-images')
+      .upload(fileName, file, {
         cacheControl: '3600'
-      .upload(filePath, file)
+      })
 
     if (error) {
       return { data: null, error }
@@ -74,7 +76,7 @@ export const profileHelpers = {
 
     const { data: { publicUrl } } = supabase.storage
       .from('profile-images')
-      .getPublicUrl(filePath)
+      .getPublicUrl(fileName)
 
     return { data: { publicUrl }, error: null }
   },
