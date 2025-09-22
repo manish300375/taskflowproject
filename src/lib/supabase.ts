@@ -51,3 +51,35 @@ export const authHelpers = {
     return supabase.auth.onAuthStateChange(callback)
   }
 }
+
+// Profile helper functions
+export const profileHelpers = {
+  // Upload profile image to Supabase storage
+  uploadProfileImage: async (file: File, userId: string) => {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
+    const filePath = `avatars/${fileName}`
+
+    const { data, error } = await supabase.storage
+      .from('profile-images')
+      .upload(filePath, file)
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('profile-images')
+      .getPublicUrl(filePath)
+
+    return { data: { publicUrl }, error: null }
+  },
+
+  // Update user profile metadata
+  updateUserProfile: async (userId: string, updates: { full_name?: string; avatar_url?: string }) => {
+    const { data, error } = await supabase.auth.updateUser({
+      data: updates
+    })
+    return { data, error }
+  }
+}
