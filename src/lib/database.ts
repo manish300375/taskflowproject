@@ -78,6 +78,17 @@ export const taskHelpers = {
     return { data, error };
   },
 
+  // Get completed tasks ordered by completion date (fallback to updated_at)
+  getCompletedTasksArchive: async () => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('status', 'completed')
+      .order('updated_at', { ascending: false });
+    
+    return { data, error };
+  },
+
   // Get tasks by priority
   getTasksByPriority: async (priority: 'low' | 'medium' | 'high') => {
     const { data, error } = await supabase

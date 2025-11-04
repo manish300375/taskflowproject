@@ -16,16 +16,16 @@ import {
   Sparkles,
   Save
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { taskHelpers, subtaskHelpers, aiHelpers, Task, Subtask, CreateTaskData, UpdateTaskData } from '../lib/database';
 import ProfileSection from './ProfileSection';
 
 interface DashboardProps {
-  onLogout: () => void;
-  onNavigateHome: () => void;
   user: any;
 }
 
-export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardProps) {
+export default function Dashboard({ user }: DashboardProps) {
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<'tasks' | 'profile'>('tasks');
   const [currentUser, setCurrentUser] = useState(user);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -353,13 +353,13 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
             </div>
             
             <div className="flex items-center space-x-4">
-              <button
-                onClick={onNavigateHome}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors duration-200"
-              >
-                <Home className="h-5 w-5" />
-                <span>Home</span>
-              </button>
+                <Link
+                  to="/"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors duration-200"
+                >
+                  <Home className="h-5 w-5" />
+                  <span>Home</span>
+                </Link>
               <span className="text-gray-300">|</span>
               <div className="flex items-center space-x-2">
                 {currentUser?.user_metadata?.avatar_url && (
@@ -373,13 +373,20 @@ export default function Dashboard({ onLogout, onNavigateHome, user }: DashboardP
                   {currentUser?.user_metadata?.full_name || currentUser?.email || 'User'}
                 </span>
               </div>
-              <button
-                onClick={onLogout}
-                className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors duration-200"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await authHelpers.signOut();
+                      navigate('/');
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                    }
+                  }}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors duration-200"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </button>
             </div>
           </div>
         </div>

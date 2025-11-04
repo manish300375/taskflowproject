@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { CheckCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { authHelpers } from '../lib/supabase';
 
-interface SignupPageProps {
-  onBack: () => void;
-  onLogin: () => void;
-  onSignUp: () => void;
-}
-
-export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProps) {
+export default function SignupPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -108,7 +104,7 @@ export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProp
       if (data.user) {
         // Account created successfully
         console.log('Signup successful:', data.user);
-        onSignUp();
+        navigate('/');
       }
     } catch (error) {
       console.error('Signup failed:', error);
@@ -124,13 +120,13 @@ export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProp
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <button
-              onClick={onBack}
+            <Link
+              to="/"
               className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors duration-200"
             >
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Home</span>
-            </button>
+            </Link>
             
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-8 w-8 text-blue-500" />
@@ -286,12 +282,12 @@ export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProp
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Already have an account?{' '}
-                <button
-                  onClick={onLogin}
+                <Link
+                  to="/login"
                   className="text-blue-500 hover:text-blue-600 transition-colors duration-200 font-medium"
                 >
                   Login here
-                </button>
+                </Link>
               </p>
             </div>
           </div>
