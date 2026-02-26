@@ -94,13 +94,16 @@ export default function SignupPage({ onBack, onLogin, onSignUp }: SignupPageProp
       );
 
       if (error) {
+        console.error('Supabase signup error:', error);
         // Handle specific Supabase errors
         if (error.message.includes('already registered')) {
           setErrors({ email: 'An account with this email already exists' });
         } else if (error.message.includes('Password')) {
           setErrors({ password: error.message });
+        } else if (error.message.includes('fetch')) {
+          setErrors({ email: 'Unable to connect to authentication service. Please check your connection.' });
         } else {
-          setErrors({ email: 'Failed to create account. Please try again.' });
+          setErrors({ email: `Failed to create account: ${error.message}` });
         }
         return;
       }
