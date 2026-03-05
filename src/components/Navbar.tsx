@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
-import { CheckSquare, LogOut } from 'lucide-react';
+import { Leaf, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -38,11 +38,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <CheckSquare className="w-6 h-6 text-sage" strokeWidth={2.5} />
-            <h1 className="text-[22px] font-bold text-charcoal">TaskFlow</h1>
+            <Leaf className="w-8 h-8 text-sage" />
+            <h1 className="text-2xl font-bold text-charcoal">TaskFlow</h1>
           </button>
 
           <div className="flex items-center gap-4">
