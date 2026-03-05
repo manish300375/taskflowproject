@@ -143,20 +143,6 @@ export default function Home() {
               <p className="text-xl text-mutedGray mb-8 leading-relaxed">
                 Manage your daily tasks simply and beautifully.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  to="/signup"
-                  className="px-8 py-4 bg-sage text-white rounded-xl font-semibold hover:bg-[#6B9D6F] transition-all shadow-sm text-lg text-center"
-                >
-                  Create Free Account
-                </Link>
-                <Link
-                  to="/login"
-                  className="px-8 py-4 border-2 border-sage text-sage rounded-xl font-semibold hover:bg-sage hover:bg-opacity-5 transition-all text-lg text-center"
-                >
-                  Log In
-                </Link>
-              </div>
             </div>
 
             <div className="fade-in-on-scroll lg:pl-8">
