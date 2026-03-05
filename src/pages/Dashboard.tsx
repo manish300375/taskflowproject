@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import TaskModal from '../components/TaskModal';
 import AddTaskModal from '../components/AddTaskModal';
+import EditTaskModal from '../components/EditTaskModal';
 
 interface Task {
   id: string;
@@ -23,8 +23,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
@@ -108,11 +108,11 @@ export default function Dashboard() {
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
-    setShowModal(true);
+    setShowEditModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
     setEditingTask(null);
   };
 
@@ -231,22 +231,22 @@ export default function Dashboard() {
         )}
       </main>
 
-      {showModal && (
-        <TaskModal
-          task={editingTask}
-          onClose={handleCloseModal}
-          onSave={() => {
-            handleCloseModal();
-            fetchTasks();
-          }}
-        />
-      )}
-
       {showAddModal && (
         <AddTaskModal
           onClose={handleCloseAddModal}
           onSave={() => {
             handleCloseAddModal();
+            fetchTasks();
+          }}
+        />
+      )}
+
+      {showEditModal && editingTask && (
+        <EditTaskModal
+          task={editingTask}
+          onClose={handleCloseEditModal}
+          onSave={() => {
+            handleCloseEditModal();
             fetchTasks();
           }}
         />
