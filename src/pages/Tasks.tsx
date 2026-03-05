@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Trash2, CreditCard as Edit2, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, CheckSquare, Clock, AlertCircle, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 interface Task {
@@ -13,6 +13,14 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   created_at: string;
+}
+
+interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  order: number;
 }
 
 export default function Tasks() {
@@ -29,6 +37,9 @@ export default function Tasks() {
     priority: 'medium' as Task['priority'],
     due_date: '',
   });
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [subtasks, setSubtasks] = useState<Record<string, Subtask[]>>({});
+  const [generatingSubtasks, setGeneratingSubtasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) {
@@ -121,6 +132,96 @@ export default function Tasks() {
     setShowModal(true);
   };
 
+  const fetchSubtasks = async (taskId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('order', { ascending: true });
+
+      if (error) throw error;
+      setSubtasks(prev => ({ ...prev, [taskId]: data || [] }));
+    } catch (error) {
+      console.error('Error fetching subtasks:', error);
+    }
+  };
+
+  const handleToggleExpand = async (taskId: string) => {
+    const newExpanded = new Set(expandedTasks);
+
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+    } else {
+      newExpanded.add(taskId);
+      if (!subtasks[taskId]) {
+        await fetchSubtasks(taskId);
+      }
+    }
+
+    setExpandedTasks(newExpanded);
+  };
+
+  const handleGenerateSubtasks = async (task: Task) => {
+    if (generatingSubtasks.has(task.id)) return;
+
+    setGeneratingSubtasks(prev => new Set(prev).add(task.id));
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-subtasks`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskId: task.id,
+          taskTitle: task.title,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate subtasks');
+      }
+
+      await fetchSubtasks(task.id);
+
+      if (!expandedTasks.has(task.id)) {
+        setExpandedTasks(prev => new Set(prev).add(task.id));
+      }
+    } catch (error) {
+      console.error('Error generating subtasks:', error);
+      alert(`Failed to generate subtasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setGeneratingSubtasks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(task.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleToggleSubtask = async (subtask: Subtask) => {
+    try {
+      const { error } = await supabase
+        .from('subtasks')
+        .update({ completed: !subtask.completed })
+        .eq('id', subtask.id);
+
+      if (error) throw error;
+      await fetchSubtasks(subtask.task_id);
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
+    }
+  };
+
 
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
@@ -182,42 +283,93 @@ export default function Tasks() {
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition"
+                className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {getStatusIcon(task.status)}
-                      <h3 className="font-semibold text-slate-900">{task.title}</h3>
-                      <span className={`text-xs px-2 py-1 rounded border ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-2 flex-1">
+                      <button
+                        onClick={() => handleToggleExpand(task.id)}
+                        className="p-1 text-slate-400 hover:text-slate-600 transition mt-0.5"
+                      >
+                        {expandedTasks.has(task.id) ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </button>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusIcon(task.status)}
+                          <h3 className="font-semibold text-slate-900">{task.title}</h3>
+                          <span className={`text-xs px-2 py-1 rounded border ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-slate-600 mb-2">{task.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                          <span className="capitalize">{task.status.replace('_', ' ')}</span>
+                          {task.due_date && (
+                            <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {task.description && (
-                      <p className="text-sm text-slate-600 mb-2">{task.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
-                      <span className="capitalize">{task.status.replace('_', ' ')}</span>
-                      {task.due_date && (
-                        <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(task)}
+                        className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEdit(task)}
-                      className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded transition"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(task.id)}
-                      className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
+
+                {expandedTasks.has(task.id) && (
+                  <div className="border-t border-slate-200 bg-slate-50 p-4">
+                    {subtasks[task.id] && subtasks[task.id].length > 0 ? (
+                      <div className="space-y-2">
+                        {subtasks[task.id].map((subtask) => (
+                          <div
+                            key={subtask.id}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={subtask.completed}
+                              onChange={() => handleToggleSubtask(subtask)}
+                              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className={subtask.completed ? 'line-through text-slate-400' : 'text-slate-700'}>
+                              {subtask.title}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : generatingSubtasks.has(task.id) ? (
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Generating subtasks...</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleGenerateSubtasks(task)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        Generate subtasks with AI
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
