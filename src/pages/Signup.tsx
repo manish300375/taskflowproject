@@ -1,28 +1,53 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckSquare } from 'lucide-react';
+import { Leaf, Eye, EyeOff } from 'lucide-react';
 
 export default function Signup() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+    if (!fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!email.trim()) {
+      newErrors.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
@@ -31,7 +56,7 @@ export default function Signup() {
     const { error } = await signUp(email, password);
 
     if (error) {
-      setError(error.message);
+      setErrors({ general: error.message });
       setLoading(false);
     } else {
       navigate('/tasks');
@@ -39,86 +64,153 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-cream flex items-center justify-center p-6">
+      <div className="w-full max-w-[480px]">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <CheckSquare className="w-10 h-10 text-blue-600" />
-            <h1 className="text-3xl font-bold text-slate-900">TaskFlow</h1>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Leaf className="w-12 h-12 text-sage" strokeWidth={2.5} />
+            <h1 className="text-4xl font-bold text-charcoal">TaskFlow</h1>
           </div>
-          <p className="text-slate-600">Create your account to get started</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-6">Sign up</h2>
+        <div className="bg-white rounded-card shadow-soft p-10">
+          <h2 className="text-[32px] font-bold text-charcoal mb-2">Create Your Account</h2>
+          <p className="text-mutedGray text-base mb-8">Start organizing your day with ease.</p>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+          {errors.general && (
+            <div className="mb-6 p-4 bg-red-50 border border-softRed rounded-button text-softRed text-base">
+              {errors.general}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                Email
+              <label htmlFor="fullName" className="block text-base font-semibold text-charcoal mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (errors.fullName) {
+                    setErrors({ ...errors, fullName: '' });
+                  }
+                }}
+                className={`w-full px-5 py-4 text-base border ${
+                  errors.fullName ? 'border-softRed' : 'border-gray-300'
+                } rounded-button focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition`}
+                placeholder="Your full name"
+              />
+              {errors.fullName && (
+                <p className="mt-2 text-sm text-softRed">{errors.fullName}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-base font-semibold text-charcoal mb-2">
+                Email Address
               </label>
               <input
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) {
+                    setErrors({ ...errors, email: '' });
+                  }
+                }}
+                className={`w-full px-5 py-4 text-base border ${
+                  errors.email ? 'border-softRed' : 'border-gray-300'
+                } rounded-button focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition`}
                 placeholder="you@example.com"
-                required
               />
+              {errors.email && (
+                <p className="mt-2 text-sm text-softRed">{errors.email}</p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="password" className="block text-base font-semibold text-charcoal mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) {
+                      setErrors({ ...errors, password: '' });
+                    }
+                  }}
+                  className={`w-full px-5 py-4 pr-12 text-base border ${
+                    errors.password ? 'border-softRed' : 'border-gray-300'
+                  } rounded-button focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition`}
+                  placeholder="Create a password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-mutedGray hover:text-charcoal transition"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-2 text-sm text-softRed">{errors.password}</p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-base font-semibold text-charcoal mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors({ ...errors, confirmPassword: '' });
+                    }
+                  }}
+                  className={`w-full px-5 py-4 pr-12 text-base border ${
+                    errors.confirmPassword ? 'border-softRed' : 'border-gray-300'
+                  } rounded-button focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition`}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-mutedGray hover:text-charcoal transition"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="mt-2 text-sm text-softRed">{errors.confirmPassword}</p>
+              )}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-sage text-white py-3 px-6 rounded-button text-base font-semibold hover:bg-[#6B9D6F] transition disabled:opacity-50 disabled:cursor-not-allowed mt-8"
             >
-              {loading ? 'Creating account...' : 'Sign Up'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-slate-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Sign in
+          <div className="mt-6 text-center text-base">
+            <span className="text-mutedGray">Already have an account? </span>
+            <Link to="/login" className="text-coral hover:text-[#E67958] font-semibold transition">
+              Log In
             </Link>
           </div>
         </div>
