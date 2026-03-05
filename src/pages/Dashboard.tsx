@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, Filter, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import AddTaskModal from '../components/AddTaskModal';
 import EditTaskModal from '../components/EditTaskModal';
@@ -213,11 +213,15 @@ export default function Dashboard() {
     <div className="min-h-screen bg-cream">
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        <div className="flex items-end justify-between mb-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        <div className="flex items-end justify-between mb-8">
           <div>
             <h1 className="text-[32px] font-bold text-charcoal mb-2">Your Tasks</h1>
-            <p className="text-mutedGray text-base">Manage and organize your tasks efficiently.</p>
+            <p className="text-mutedGray text-base">
+              {tasks.length === 0
+                ? 'No tasks yet. Add your first one!'
+                : `Showing ${filteredTasks.length} of ${tasks.length} tasks`}
+            </p>
           </div>
           <button
             onClick={handleAddTask}
@@ -228,186 +232,197 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="bg-white rounded-card shadow-soft p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-mutedGray" />
-              <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
-            </div>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-coral hover:text-red-700 transition-colors"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-charcoal mb-2">Priority</label>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)}
-                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
-              >
-                <option value="all">All Priorities</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-charcoal mb-2">Status</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
-              >
-                <option value="all">All Statuses</option>
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-charcoal mb-2">Due Date</label>
-              <select
-                value={filterDueDate}
-                onChange={(e) => setFilterDueDate(e.target.value as typeof filterDueDate)}
-                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
-              >
-                <option value="all">All Dates</option>
-                <option value="overdue">Overdue</option>
-                <option value="today">Due Today</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="no_date">No Due Date</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4 text-sm text-mutedGray">
-            Showing {filteredTasks.length} of {tasks.length} tasks
-          </div>
-        </div>
-
         {tasks.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-card shadow-soft">
             <div className="text-6xl mb-4">📝</div>
-            <p className="text-mutedGray text-lg">No tasks yet. Add your first one!</p>
-          </div>
-        ) : filteredTasks.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-card shadow-soft">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-mutedGray text-lg">No tasks match your filters.</p>
-            <button
-              onClick={clearFilters}
-              className="mt-4 text-sage hover:text-[#6B9D6F] font-semibold transition-colors"
-            >
-              Clear Filters
-            </button>
+            <p className="text-mutedGray text-lg">Start organizing your work by adding your first task!</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className={`bg-white rounded-card shadow-soft p-5 hover:shadow-md transition-all ${
-                  task.status === 'completed' ? 'opacity-50' : ''
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 pt-1">
-                    <button
-                      onClick={() => handleToggleComplete(task)}
-                      className="w-5 h-5 rounded border-2 border-sage flex items-center justify-center hover:bg-sage hover:bg-opacity-10 transition-all"
-                    >
-                      {task.status === 'completed' && (
-                        <svg
-                          className="w-4 h-4 text-sage"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+          <div className="bg-white rounded-card shadow-soft overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Task</span>
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Description</span>
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Status</span>
+                        <select
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+                          className="text-xs px-2 py-1 bg-white border border-gray-300 rounded-lg text-charcoal focus:outline-none focus:border-sage transition-colors cursor-pointer"
                         >
-                          <path d="M5 13l4 4L19 7"></path>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className={`text-lg font-bold text-charcoal ${
-                          task.status === 'completed' ? 'line-through' : ''
+                          <option value="all">All</option>
+                          <option value="todo">To Do</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Due Date</span>
+                        <select
+                          value={filterDueDate}
+                          onChange={(e) => setFilterDueDate(e.target.value as typeof filterDueDate)}
+                          className="text-xs px-2 py-1 bg-white border border-gray-300 rounded-lg text-charcoal focus:outline-none focus:border-sage transition-colors cursor-pointer"
+                        >
+                          <option value="all">All</option>
+                          <option value="overdue">Overdue</option>
+                          <option value="today">Today</option>
+                          <option value="upcoming">Upcoming</option>
+                          <option value="no_date">No Date</option>
+                        </select>
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Priority</span>
+                        <select
+                          value={filterPriority}
+                          onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)}
+                          className="text-xs px-2 py-1 bg-white border border-gray-300 rounded-lg text-charcoal focus:outline-none focus:border-sage transition-colors cursor-pointer"
+                        >
+                          <option value="all">All</option>
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-right">
+                      <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <div className="text-4xl mb-3">🔍</div>
+                        <p className="text-mutedGray">No tasks match your filters.</p>
+                        <button
+                          onClick={clearFilters}
+                          className="mt-3 text-sage hover:text-[#6B9D6F] font-semibold transition-colors text-sm"
+                        >
+                          Clear Filters
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTasks.map((task) => (
+                      <tr
+                        key={task.id}
+                        className={`hover:bg-gray-50 transition-colors ${
+                          task.status === 'completed' ? 'opacity-60' : ''
                         }`}
                       >
-                        {task.title}
-                      </h3>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                          task.priority === 'high'
-                            ? 'bg-red-100 text-red-700'
-                            : task.priority === 'medium'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}
-                      >
-                        {task.priority}
-                      </span>
-                    </div>
-                    {task.description && (
-                      <p className="text-sm text-mutedGray mb-2">{task.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span
-                        className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-                          task.status === 'completed'
-                            ? 'bg-sage bg-opacity-20 text-sage'
-                            : task.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-mutedGray'
-                        }`}
-                      >
-                        {task.status === 'todo' ? 'To Do' : task.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                      </span>
-                      {task.due_date && (
-                        <span className="inline-block px-3 py-1 bg-softGreen text-sage text-xs font-semibold rounded-full">
-                          Due: {new Date(task.due_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleEdit(task)}
-                      className="p-2 text-mutedGray hover:text-coral hover:bg-coral hover:bg-opacity-10 rounded-button transition-all"
-                      aria-label="Edit task"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(task.id)}
-                      className="p-2 text-mutedGray hover:text-coral hover:bg-coral hover:bg-opacity-10 rounded-button transition-all"
-                      aria-label="Delete task"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleToggleComplete(task)}
+                              className="w-5 h-5 rounded border-2 border-sage flex items-center justify-center hover:bg-sage hover:bg-opacity-10 transition-all flex-shrink-0"
+                            >
+                              {task.status === 'completed' && (
+                                <svg
+                                  className="w-4 h-4 text-sage"
+                                  fill="none"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="3"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path d="M5 13l4 4L19 7"></path>
+                                </svg>
+                              )}
+                            </button>
+                            <span
+                              className={`font-semibold text-charcoal ${
+                                task.status === 'completed' ? 'line-through' : ''
+                              }`}
+                            >
+                              {task.title}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-mutedGray">
+                            {task.description || '-'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                              task.status === 'completed'
+                                ? 'bg-sage bg-opacity-20 text-sage'
+                                : task.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-mutedGray'
+                            }`}
+                          >
+                            {task.status === 'todo' ? 'To Do' : task.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {task.due_date ? (
+                            <span className="text-sm text-charcoal">
+                              {new Date(task.due_date).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-mutedGray">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                              task.priority === 'high'
+                                ? 'bg-red-100 text-red-700'
+                                : task.priority === 'medium'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}
+                          >
+                            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(task)}
+                              className="p-2 text-mutedGray hover:text-sage hover:bg-sage hover:bg-opacity-10 rounded-lg transition-all"
+                              aria-label="Edit task"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(task.id)}
+                              className="p-2 text-mutedGray hover:text-coral hover:bg-coral hover:bg-opacity-10 rounded-lg transition-all"
+                              aria-label="Delete task"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </main>
