@@ -1,37 +1,52 @@
 import { useAuth } from '../contexts/AuthContext';
-import { Leaf, LogOut } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Leaf, LogOut, User } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 
 export default function Navbar() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
-  const [firstName, setFirstName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
-      fetchUserProfile();
+      setAvatarUrl(user.user_metadata?.avatar_url || '');
+      setFullName(user.user_metadata?.full_name || '');
     }
   }, [user]);
 
-  const fetchUserProfile = async () => {
-    if (!user) return;
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('first_name')
-      .eq('id', user.id)
-      .maybeSingle();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    if (data && !error) {
-      setFirstName(data.first_name);
+  const getInitials = () => {
+    if (!user?.email) return 'U';
+    const name = fullName || user.email;
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
+    return name.substring(0, 2).toUpperCase();
   };
 
   const handleLogout = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    setShowDropdown(false);
+    navigate('/profile');
   };
 
   return (
@@ -47,26 +62,51 @@ export default function Navbar() {
           </button>
 
           <div className="flex items-center gap-4">
-            {firstName && (
+            {fullName && (
               <span className="hidden sm:block text-mutedGray">
-                Hi, {firstName} 👋
+                Hi, {fullName.split(' ')[0]} 👋
               </span>
             )}
 
-            <button
-              onClick={handleLogout}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 border-2 border-coral text-coral rounded-xl font-semibold hover:bg-coral hover:text-white transition-all"
-            >
-              Log Out
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-10 h-10 rounded-full overflow-hidden bg-sage bg-opacity-10 flex items-center justify-center hover:ring-2 hover:ring-sage hover:ring-opacity-30 transition-all"
+                aria-label="Profile menu"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-sage text-sm font-bold">
+                    {getInitials()}
+                  </div>
+                )}
+              </button>
 
-            <button
-              onClick={handleLogout}
-              className="sm:hidden p-2 border-2 border-coral text-coral rounded-xl hover:bg-coral hover:text-white transition-all"
-              aria-label="Log out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-card shadow-soft border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={handleProfileClick}
+                    className="w-full px-4 py-2 text-left text-charcoal hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    My Profile
+                  </button>
+                  <div className="border-t border-gray-200 my-1"></div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-coral hover:bg-coral hover:bg-opacity-10 transition-colors flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
