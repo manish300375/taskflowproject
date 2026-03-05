@@ -158,7 +158,9 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate subtasks');
+        const errorData = await response.json();
+        console.error('Edge function error:', errorData);
+        throw new Error(errorData.error || 'Failed to generate subtasks');
       }
 
       const { data: newSubtasks, error: refetchError } = await supabase
