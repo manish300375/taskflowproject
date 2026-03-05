@@ -39,7 +39,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
           >
             <CheckSquare className="w-6 h-6 text-sage" strokeWidth={2.5} />
             <h1 className="text-[22px] font-bold text-charcoal">TaskFlow</h1>
