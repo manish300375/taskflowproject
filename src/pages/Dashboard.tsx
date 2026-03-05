@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Filter, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import AddTaskModal from '../components/AddTaskModal';
 import EditTaskModal from '../components/EditTaskModal';
@@ -30,6 +30,9 @@ export default function Dashboard() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
+  const [filterDueDate, setFilterDueDate] = useState<'all' | 'overdue' | 'today' | 'upcoming' | 'no_date'>('all');
 
   useEffect(() => {
     if (!user) {
@@ -146,6 +149,58 @@ export default function Dashboard() {
     setShowAddModal(false);
   };
 
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (filterPriority !== 'all' && task.priority !== filterPriority) {
+        return false;
+      }
+
+      if (filterStatus !== 'all' && task.status !== filterStatus) {
+        return false;
+      }
+
+      if (filterDueDate !== 'all') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (filterDueDate === 'no_date' && task.due_date !== null) {
+          return false;
+        }
+
+        if (filterDueDate !== 'no_date' && task.due_date === null) {
+          return false;
+        }
+
+        if (task.due_date) {
+          const dueDate = new Date(task.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+
+          if (filterDueDate === 'overdue' && dueDate >= today) {
+            return false;
+          }
+
+          if (filterDueDate === 'today' && dueDate.getTime() !== today.getTime()) {
+            return false;
+          }
+
+          if (filterDueDate === 'upcoming' && dueDate <= today) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [tasks, filterPriority, filterStatus, filterDueDate]);
+
+  const clearFilters = () => {
+    setFilterPriority('all');
+    setFilterStatus('all');
+    setFilterDueDate('all');
+  };
+
+  const hasActiveFilters = filterPriority !== 'all' || filterStatus !== 'all' || filterDueDate !== 'all';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
@@ -158,11 +213,11 @@ export default function Dashboard() {
     <div className="min-h-screen bg-cream">
       <Navbar />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        <div className="flex items-end justify-between mb-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        <div className="flex items-end justify-between mb-6">
           <div>
             <h1 className="text-[32px] font-bold text-charcoal mb-2">Your Tasks</h1>
-            <p className="text-mutedGray text-base">Here's what you have going on today.</p>
+            <p className="text-mutedGray text-base">Manage and organize your tasks efficiently.</p>
           </div>
           <button
             onClick={handleAddTask}
@@ -173,14 +228,92 @@ export default function Dashboard() {
           </button>
         </div>
 
+        <div className="bg-white rounded-card shadow-soft p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-mutedGray" />
+              <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 text-sm text-coral hover:text-red-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Clear All
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-charcoal mb-2">Priority</label>
+              <select
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)}
+                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
+              >
+                <option value="all">All Priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-charcoal mb-2">Status</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
+              >
+                <option value="all">All Statuses</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-charcoal mb-2">Due Date</label>
+              <select
+                value={filterDueDate}
+                onChange={(e) => setFilterDueDate(e.target.value as typeof filterDueDate)}
+                className="w-full px-4 py-2 bg-cream border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors"
+              >
+                <option value="all">All Dates</option>
+                <option value="overdue">Overdue</option>
+                <option value="today">Due Today</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="no_date">No Due Date</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 text-sm text-mutedGray">
+            Showing {filteredTasks.length} of {tasks.length} tasks
+          </div>
+        </div>
+
         {tasks.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-card shadow-soft">
             <div className="text-6xl mb-4">📝</div>
             <p className="text-mutedGray text-lg">No tasks yet. Add your first one!</p>
           </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-card shadow-soft">
+            <div className="text-6xl mb-4">🔍</div>
+            <p className="text-mutedGray text-lg">No tasks match your filters.</p>
+            <button
+              onClick={clearFilters}
+              className="mt-4 text-sage hover:text-[#6B9D6F] font-semibold transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
-            {tasks.map((task) => (
+            {filteredTasks.map((task) => (
               <div
                 key={task.id}
                 className={`bg-white rounded-card shadow-soft p-5 hover:shadow-md transition-all ${
