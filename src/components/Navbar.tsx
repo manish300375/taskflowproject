@@ -1,10 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
 import { CheckSquare, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export default function Navbar() {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
 
   useEffect(() => {
@@ -35,10 +37,13 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <CheckSquare className="w-6 h-6 text-sage" strokeWidth={2.5} />
             <h1 className="text-[22px] font-bold text-charcoal">TaskFlow</h1>
-          </div>
+          </button>
 
           <div className="flex items-center gap-4">
             {firstName && (
