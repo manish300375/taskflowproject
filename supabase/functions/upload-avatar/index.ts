@@ -57,9 +57,11 @@ Deno.serve(async (req: Request) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user.id}_${Date.now()}.${fileExt}`;
 
+    const fileBuffer = await file.arrayBuffer();
+
     const { error: uploadError, data } = await supabaseClient.storage
       .from('profile_pictures')
-      .upload(fileName, file, {
+      .upload(fileName, fileBuffer, {
         upsert: true,
         contentType: file.type,
       });
