@@ -44,60 +44,32 @@ export default function Profile() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
-      return;
-    }
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
     setUploading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const { error: uploadError, data } = await supabase.storage
+        .from('profile_pictures')
+        .upload(fileName, file, { upsert: true });
 
-      const formData = new FormData();
-      formData.append('file', file);
+      if (uploadError) throw uploadError;
 
-      console.log('Uploading to:', `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`);
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile_pictures')
+        .getPublicUrl(data.path);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        }
-      );
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
 
-      console.log('Response status:', response.status);
-      const responseText = await response.text();
-      console.log('Response body:', responseText);
+      if (updateError) throw updateError;
 
-      if (!response.ok) {
-        const errorData = responseText ? JSON.parse(responseText) : {};
-        console.error('Upload error details:', errorData);
-        throw new Error(errorData.error || errorData.details || 'Failed to upload image');
-      }
-
-      const { publicUrl } = JSON.parse(responseText);
       setAvatarUrl(publicUrl);
-
-      const { data: { user: updatedUser } } = await supabase.auth.getUser();
-      if (updatedUser) {
-        setAvatarUrl(updatedUser.user_metadata?.avatar_url || publicUrl);
-      }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload profile picture. Please try again.');
+      alert('Failed to upload profile picture. Please try again.');
     } finally {
       setUploading(false);
     }
