@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import TaskModal from '../components/TaskModal';
+import AddTaskModal from '../components/AddTaskModal';
 
 interface Task {
   id: string;
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
@@ -115,8 +117,11 @@ export default function Dashboard() {
   };
 
   const handleAddTask = () => {
-    setEditingTask(null);
-    setShowModal(true);
+    setShowAddModal(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
   };
 
   if (loading) {
@@ -232,6 +237,16 @@ export default function Dashboard() {
           onClose={handleCloseModal}
           onSave={() => {
             handleCloseModal();
+            fetchTasks();
+          }}
+        />
+      )}
+
+      {showAddModal && (
+        <AddTaskModal
+          onClose={handleCloseAddModal}
+          onSave={() => {
+            handleCloseAddModal();
             fetchTasks();
           }}
         />
