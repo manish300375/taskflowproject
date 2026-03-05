@@ -1,17 +1,29 @@
-import { useState } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, X, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SmartSearchProps {
   onSearchResults: (taskIds: string[]) => void;
   onClearSearch: () => void;
+  taskCount: number;
 }
 
-export default function SmartSearch({ onSearchResults, onClearSearch }: SmartSearchProps) {
+export default function SmartSearch({ onSearchResults, onClearSearch, taskCount }: SmartSearchProps) {
   const { session } = useAuth();
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
+  const [showBackfillButton, setShowBackfillButton] = useState(false);
+
+  useEffect(() => {
+    const checkBackfillNeeded = async () => {
+      if (taskCount > 0 && session) {
+        setShowBackfillButton(true);
+      }
+    };
+    checkBackfillNeeded();
+  }, [taskCount, session]);
 
   const handleSearch = async () => {
     if (!query.trim() || !session) return;
@@ -62,9 +74,70 @@ export default function SmartSearch({ onSearchResults, onClearSearch }: SmartSea
     }
   };
 
+  const handleBackfillEmbeddings = async () => {
+    if (!session) return;
+
+    setIsBackfilling(true);
+
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/backfill-embeddings`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backfill error:', errorData);
+        throw new Error(errorData.error || 'Backfill failed');
+      }
+
+      const result = await response.json();
+      console.log('Backfill result:', result);
+      alert(`Successfully enabled smart search for ${result.updatedCount} existing tasks!`);
+      setShowBackfillButton(false);
+    } catch (error) {
+      console.error('Error backfilling embeddings:', error);
+      alert('Failed to enable smart search. Please try again.');
+    } finally {
+      setIsBackfilling(false);
+    }
+  };
+
   return (
     <div className="mb-6">
       <div className="bg-white rounded-card shadow-soft p-4">
+        {showBackfillButton && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">Enable Smart Search</p>
+              <p className="text-xs text-blue-700">
+                Process your existing tasks to enable semantic search capabilities
+              </p>
+            </div>
+            <button
+              onClick={handleBackfillEmbeddings}
+              disabled={isBackfilling}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed ml-3 flex-shrink-0"
+            >
+              {isBackfilling ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Enable Now
+                </>
+              )}
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <input

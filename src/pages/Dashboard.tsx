@@ -358,6 +358,7 @@ export default function Dashboard() {
           <SmartSearch
             onSearchResults={handleSearchResults}
             onClearSearch={handleClearSearch}
+            taskCount={tasks.length}
           />
         )}
 
