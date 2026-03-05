@@ -250,11 +250,6 @@ export default function Dashboard() {
                     </th>
                     <th className="px-6 py-4 text-left">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Description</span>
-                      </div>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-charcoal uppercase tracking-wider">Status</span>
                         <select
                           value={filterStatus}
@@ -307,7 +302,7 @@ export default function Dashboard() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredTasks.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
+                      <td colSpan={5} className="px-6 py-12 text-center">
                         <div className="text-4xl mb-3">🔍</div>
                         <p className="text-mutedGray">No tasks match your filters.</p>
                         <button
@@ -354,11 +349,6 @@ export default function Dashboard() {
                               {task.title}
                             </span>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-mutedGray">
-                            {task.description || '-'}
-                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span
