@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import AddTaskModal from '../components/AddTaskModal';
 import EditTaskModal from '../components/EditTaskModal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 interface Task {
   id: string;
@@ -25,7 +26,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -95,15 +99,33 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingTaskId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingTaskId) return;
+
+    setIsDeleting(true);
 
     try {
-      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      const { error } = await supabase.from('tasks').delete().eq('id', deletingTaskId);
       if (error) throw error;
+
+      setShowDeleteModal(false);
+      setDeletingTaskId(null);
+      fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingTaskId(null);
   };
 
   const handleEdit = (task: Task) => {
@@ -217,7 +239,7 @@ export default function Dashboard() {
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(task.id)}
+                      onClick={() => handleDeleteClick(task.id)}
                       className="p-2 text-mutedGray hover:text-coral hover:bg-coral hover:bg-opacity-10 rounded-button transition-all"
                       aria-label="Delete task"
                     >
@@ -249,6 +271,14 @@ export default function Dashboard() {
             handleCloseEditModal();
             fetchTasks();
           }}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteConfirmationModal
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          loading={isDeleting}
         />
       )}
     </div>
