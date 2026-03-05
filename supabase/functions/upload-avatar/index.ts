@@ -93,8 +93,12 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
+    console.error('Upload avatar error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: error.message || 'Unknown error',
+        details: error.toString()
+      }),
       {
         status: 400,
         headers: {

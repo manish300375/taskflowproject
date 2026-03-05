@@ -65,6 +65,8 @@ export default function Profile() {
       const formData = new FormData();
       formData.append('file', file);
 
+      console.log('Uploading to:', `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`,
         {
@@ -76,12 +78,17 @@ export default function Profile() {
         }
       );
 
+      console.log('Response status:', response.status);
+      const responseText = await response.text();
+      console.log('Response body:', responseText);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload image');
+        const errorData = responseText ? JSON.parse(responseText) : {};
+        console.error('Upload error details:', errorData);
+        throw new Error(errorData.error || errorData.details || 'Failed to upload image');
       }
 
-      const { publicUrl } = await response.json();
+      const { publicUrl } = JSON.parse(responseText);
       setAvatarUrl(publicUrl);
 
       const { data: { user: updatedUser } } = await supabase.auth.getUser();
