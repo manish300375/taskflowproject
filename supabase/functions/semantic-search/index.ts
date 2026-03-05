@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { query, similarity_threshold = 0.8 }: SearchRequest = await req.json();
+    const { query, similarity_threshold = 0.7 }: SearchRequest = await req.json();
 
     if (!query || query.trim() === "") {
       return new Response(

@@ -30,7 +30,7 @@ export default function SmartSearch({ onSearchResults, onClearSearch }: SmartSea
         },
         body: JSON.stringify({
           query: query.trim(),
-          similarity_threshold: 0.8,
+          similarity_threshold: 0.7,
         }),
       });
 
@@ -111,7 +111,7 @@ export default function SmartSearch({ onSearchResults, onClearSearch }: SmartSea
 
         {hasSearched && !isSearching && (
           <div className="mt-3 text-sm text-mutedGray">
-            Showing tasks with 80%+ similarity to your search
+            Showing tasks with 70%+ similarity to your search
           </div>
         )}
       </div>
