@@ -12,7 +12,7 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'todo' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   created_at: string;
@@ -87,7 +87,7 @@ export default function Dashboard() {
 
   const handleToggleComplete = async (task: Task) => {
     try {
-      const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+      const newStatus = task.status === 'completed' ? 'todo' : 'completed';
       const { error } = await supabase
         .from('tasks')
         .update({ status: newStatus })
@@ -210,24 +210,50 @@ export default function Dashboard() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3
-                      className={`text-lg font-bold text-charcoal mb-1 ${
-                        task.status === 'completed' ? 'line-through' : ''
-                      }`}
-                    >
-                      {task.title}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3
+                        className={`text-lg font-bold text-charcoal ${
+                          task.status === 'completed' ? 'line-through' : ''
+                        }`}
+                      >
+                        {task.title}
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                          task.priority === 'high'
+                            ? 'bg-red-100 text-red-700'
+                            : task.priority === 'medium'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+                    </div>
                     {task.description && (
                       <p className="text-sm text-mutedGray mb-2">{task.description}</p>
                     )}
-                    {task.due_date && (
-                      <span className="inline-block px-3 py-1 bg-softGreen text-sage text-xs font-semibold rounded-full">
-                        Due: {new Date(task.due_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span
+                        className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                          task.status === 'completed'
+                            ? 'bg-sage bg-opacity-20 text-sage'
+                            : task.status === 'in_progress'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-mutedGray'
+                        }`}
+                      >
+                        {task.status === 'todo' ? 'To Do' : task.status === 'in_progress' ? 'In Progress' : 'Completed'}
                       </span>
-                    )}
+                      {task.due_date && (
+                        <span className="inline-block px-3 py-1 bg-softGreen text-sage text-xs font-semibold rounded-full">
+                          Due: {new Date(task.due_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">

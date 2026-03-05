@@ -9,7 +9,7 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'todo' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   created_at: string;
@@ -25,7 +25,7 @@ export default function Tasks() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'pending' as Task['status'],
+    status: 'todo' as Task['status'],
     priority: 'medium' as Task['priority'],
     due_date: '',
   });
@@ -90,7 +90,7 @@ export default function Tasks() {
 
       setShowModal(false);
       setEditingTask(null);
-      setFormData({ title: '', description: '', status: 'pending', priority: 'medium', due_date: '' });
+      setFormData({ title: '', description: '', status: 'todo', priority: 'medium', due_date: '' });
       fetchTasks();
     } catch (error) {
       console.error('Error saving task:', error);
@@ -139,7 +139,7 @@ export default function Tasks() {
         return <CheckSquare className="w-4 h-4" />;
       case 'in_progress':
         return <Clock className="w-4 h-4" />;
-      case 'pending':
+      case 'todo':
         return <AlertCircle className="w-4 h-4" />;
     }
   };
@@ -162,7 +162,7 @@ export default function Tasks() {
           <button
             onClick={() => {
               setEditingTask(null);
-              setFormData({ title: '', description: '', status: 'pending', priority: 'medium', due_date: '' });
+              setFormData({ title: '', description: '', status: 'todo', priority: 'medium', due_date: '' });
               setShowModal(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -258,7 +258,7 @@ export default function Tasks() {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as Task['status'] })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   >
-                    <option value="pending">Pending</option>
+                    <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                   </select>

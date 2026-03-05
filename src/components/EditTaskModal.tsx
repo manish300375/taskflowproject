@@ -6,7 +6,7 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'todo' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   created_at: string;
@@ -22,6 +22,8 @@ interface EditTaskModalProps {
 export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>('todo');
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,8 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description || '');
+    setPriority(task.priority);
+    setStatus(task.status);
     setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
   }, [task]);
 
@@ -49,6 +53,8 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
         .update({
           title: title.trim(),
           description: description.trim() || null,
+          priority,
+          status,
           due_date: dueDate || null,
           updated_at: new Date().toISOString(),
         })
@@ -110,6 +116,40 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
               rows={4}
               className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-charcoal placeholder-mutedGray focus:outline-none focus:border-sage transition-colors resize-none text-base"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="priority" className="block text-sm font-semibold text-charcoal mb-2">
+                Priority
+              </label>
+              <select
+                id="priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors text-base"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="status" className="block text-sm font-semibold text-charcoal mb-2">
+                Status
+              </label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'todo' | 'in_progress' | 'completed')}
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-charcoal focus:outline-none focus:border-sage transition-colors text-base"
+              >
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
           </div>
 
           <div>
