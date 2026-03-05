@@ -168,8 +168,14 @@ Deno.serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("Error in generate-subtasks function:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("Error details:", { message: errorMessage, stack: errorStack });
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({
+        error: errorMessage,
+        details: errorStack
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
