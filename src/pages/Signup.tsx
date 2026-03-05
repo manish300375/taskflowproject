@@ -69,7 +69,7 @@ export default function Signup() {
         console.error('Error updating profile:', profileError);
       }
 
-      navigate('/tasks');
+      navigate('/dashboard');
     }
   };
 

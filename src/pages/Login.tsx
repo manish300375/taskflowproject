@@ -23,7 +23,7 @@ export default function Login() {
       setError('Incorrect email or password. Please try again.');
       setLoading(false);
     } else {
-      navigate('/tasks');
+      navigate('/dashboard');
     }
   };
 
