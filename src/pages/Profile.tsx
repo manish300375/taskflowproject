@@ -44,32 +44,53 @@ export default function Profile() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be less than 2MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
 
     setUploading(true);
 
     try {
-      const { error: uploadError, data } = await supabase.storage
-        .from('profile_pictures')
-        .upload(fileName, file, { upsert: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      if (uploadError) throw uploadError;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile_pictures')
-        .getPublicUrl(data.path);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl }
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
 
-      if (updateError) throw updateError;
-
+      const { publicUrl } = await response.json();
       setAvatarUrl(publicUrl);
+
+      const { data: { user: updatedUser } } = await supabase.auth.getUser();
+      if (updatedUser) {
+        setAvatarUrl(updatedUser.user_metadata?.avatar_url || publicUrl);
+      }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert('Failed to upload profile picture. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to upload profile picture. Please try again.');
     } finally {
       setUploading(false);
     }
