@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import AddTaskModal from '../components/AddTaskModal';
 import EditTaskModal from '../components/EditTaskModal';
@@ -19,6 +19,15 @@ interface Task {
   user_id: string;
 }
 
+interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  order: number;
+  created_at: string;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -33,6 +42,9 @@ export default function Dashboard() {
   const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
   const [filterDueDate, setFilterDueDate] = useState<'all' | 'overdue' | 'today' | 'upcoming' | 'no_date'>('all');
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [subtasks, setSubtasks] = useState<Map<string, Subtask[]>>(new Map());
+  const [loadingSubtasks, setLoadingSubtasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) {
@@ -99,6 +111,88 @@ export default function Dashboard() {
       if (error) throw error;
     } catch (error) {
       console.error('Error toggling task completion:', error);
+    }
+  };
+
+  const handleExpandTask = async (taskId: string, taskTitle: string) => {
+    const newExpanded = new Set(expandedTasks);
+
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+      setExpandedTasks(newExpanded);
+      return;
+    }
+
+    newExpanded.add(taskId);
+    setExpandedTasks(newExpanded);
+
+    if (subtasks.has(taskId)) {
+      return;
+    }
+
+    setLoadingSubtasks(new Set([...loadingSubtasks, taskId]));
+
+    try {
+      const { data: existingSubtasks, error: fetchError } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('order', { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      if (existingSubtasks && existingSubtasks.length > 0) {
+        setSubtasks(new Map(subtasks.set(taskId, existingSubtasks)));
+        setLoadingSubtasks(new Set([...loadingSubtasks].filter(id => id !== taskId)));
+        return;
+      }
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-subtasks`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ taskId, taskTitle }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate subtasks');
+      }
+
+      const { data: newSubtasks, error: refetchError } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('order', { ascending: true });
+
+      if (refetchError) throw refetchError;
+
+      setSubtasks(new Map(subtasks.set(taskId, newSubtasks || [])));
+    } catch (error) {
+      console.error('Error loading subtasks:', error);
+    } finally {
+      setLoadingSubtasks(new Set([...loadingSubtasks].filter(id => id !== taskId)));
+    }
+  };
+
+  const handleToggleSubtask = async (taskId: string, subtaskId: string, currentCompleted: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('subtasks')
+        .update({ completed: !currentCompleted })
+        .eq('id', subtaskId);
+
+      if (error) throw error;
+
+      const taskSubtasks = subtasks.get(taskId) || [];
+      const updatedSubtasks = taskSubtasks.map(st =>
+        st.id === subtaskId ? { ...st, completed: !currentCompleted } : st
+      );
+      setSubtasks(new Map(subtasks.set(taskId, updatedSubtasks)));
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
     }
   };
 
@@ -314,42 +408,59 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ) : (
-                    filteredTasks.map((task) => (
-                      <tr
-                        key={task.id}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          task.status === 'completed' ? 'opacity-60' : ''
-                        }`}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => handleToggleComplete(task)}
-                              className="w-5 h-5 rounded border-2 border-sage flex items-center justify-center hover:bg-sage hover:bg-opacity-10 transition-all flex-shrink-0"
-                            >
-                              {task.status === 'completed' && (
-                                <svg
-                                  className="w-4 h-4 text-sage"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
+                    filteredTasks.map((task) => {
+                      const isExpanded = expandedTasks.has(task.id);
+                      const taskSubtasks = subtasks.get(task.id) || [];
+                      const isLoadingSubtasks = loadingSubtasks.has(task.id);
+
+                      return (
+                        <>
+                          <tr
+                            key={task.id}
+                            className={`hover:bg-gray-50 transition-colors ${
+                              task.status === 'completed' ? 'opacity-60' : ''
+                            }`}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleExpandTask(task.id, task.title)}
+                                  className="p-1 text-mutedGray hover:text-sage hover:bg-sage hover:bg-opacity-10 rounded transition-all flex-shrink-0"
+                                  aria-label="Expand task"
                                 >
-                                  <path d="M5 13l4 4L19 7"></path>
-                                </svg>
-                              )}
-                            </button>
-                            <span
-                              className={`font-semibold text-charcoal ${
-                                task.status === 'completed' ? 'line-through' : ''
-                              }`}
-                            >
-                              {task.title}
-                            </span>
-                          </div>
-                        </td>
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleToggleComplete(task)}
+                                  className="w-5 h-5 rounded border-2 border-sage flex items-center justify-center hover:bg-sage hover:bg-opacity-10 transition-all flex-shrink-0"
+                                >
+                                  {task.status === 'completed' && (
+                                    <svg
+                                      className="w-4 h-4 text-sage"
+                                      fill="none"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="3"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                  )}
+                                </button>
+                                <span
+                                  className={`font-semibold text-charcoal ${
+                                    task.status === 'completed' ? 'line-through' : ''
+                                  }`}
+                                >
+                                  {task.title}
+                                </span>
+                              </div>
+                            </td>
                         <td className="px-6 py-4">
                           <span
                             className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
@@ -408,7 +519,65 @@ export default function Dashboard() {
                           </div>
                         </td>
                       </tr>
-                    ))
+                      {isExpanded && (
+                        <tr key={`${task.id}-subtasks`}>
+                          <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                            <div className="ml-12">
+                              {isLoadingSubtasks ? (
+                                <div className="flex items-center gap-2 text-mutedGray text-sm py-2">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>Generating subtasks...</span>
+                                </div>
+                              ) : taskSubtasks.length > 0 ? (
+                                <div className="space-y-2">
+                                  <div className="text-xs font-semibold text-mutedGray uppercase tracking-wider mb-3">
+                                    Subtasks
+                                  </div>
+                                  {taskSubtasks.map((subtask) => (
+                                    <div
+                                      key={subtask.id}
+                                      className="flex items-center gap-3 py-1"
+                                    >
+                                      <button
+                                        onClick={() => handleToggleSubtask(task.id, subtask.id, subtask.completed)}
+                                        className="w-4 h-4 rounded border-2 border-sage flex items-center justify-center hover:bg-sage hover:bg-opacity-10 transition-all flex-shrink-0"
+                                      >
+                                        {subtask.completed && (
+                                          <svg
+                                            className="w-3 h-3 text-sage"
+                                            fill="none"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="3"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path d="M5 13l4 4L19 7"></path>
+                                          </svg>
+                                        )}
+                                      </button>
+                                      <span
+                                        className={`text-sm text-charcoal ${
+                                          subtask.completed ? 'line-through opacity-60' : ''
+                                        }`}
+                                      >
+                                        {subtask.title}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-mutedGray py-2">
+                                  No subtasks available
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                    );
+                  })
                   )}
                 </tbody>
               </table>
