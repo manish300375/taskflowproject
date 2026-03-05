@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, LogOut, Trash2, Edit2, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import { Plus, LogOut, Trash2, CreditCard as Edit2, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 
 interface Task {
   id: string;
