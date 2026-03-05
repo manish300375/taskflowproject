@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, LogOut, Trash2, CreditCard as Edit2, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 interface Task {
   id: string;
@@ -15,7 +16,7 @@ interface Task {
 }
 
 export default function Tasks() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,10 +121,6 @@ export default function Tasks() {
     setShowModal(true);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
 
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
@@ -157,28 +154,9 @@ export default function Tasks() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="w-8 h-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-slate-900">TaskFlow</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">{user?.email}</span>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 transition"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-slate-900">My Tasks</h2>
           <button

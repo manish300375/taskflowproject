@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Leaf, Eye, EyeOff } from 'lucide-react';
+import { CheckSquare, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function Signup() {
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,8 +19,8 @@ export default function Signup() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
     }
 
     if (!email.trim()) {
@@ -53,12 +54,21 @@ export default function Signup() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password);
+    const { error, data } = await signUp(email, password);
 
     if (error) {
       setErrors({ general: error.message });
       setLoading(false);
-    } else {
+    } else if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ first_name: firstName.trim() })
+        .eq('id', data.user.id);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+
       navigate('/tasks');
     }
   };
@@ -68,7 +78,7 @@ export default function Signup() {
       <div className="w-full max-w-[480px]">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Leaf className="w-12 h-12 text-sage" strokeWidth={2.5} />
+            <CheckSquare className="w-12 h-12 text-sage" strokeWidth={2.5} />
             <h1 className="text-4xl font-bold text-charcoal">TaskFlow</h1>
           </div>
         </div>
@@ -85,26 +95,26 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="fullName" className="block text-base font-semibold text-charcoal mb-2">
-                Full Name
+              <label htmlFor="firstName" className="block text-base font-semibold text-charcoal mb-2">
+                First Name
               </label>
               <input
                 type="text"
-                id="fullName"
-                value={fullName}
+                id="firstName"
+                value={firstName}
                 onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errors.fullName) {
-                    setErrors({ ...errors, fullName: '' });
+                  setFirstName(e.target.value);
+                  if (errors.firstName) {
+                    setErrors({ ...errors, firstName: '' });
                   }
                 }}
                 className={`w-full px-5 py-4 text-base border ${
-                  errors.fullName ? 'border-softRed' : 'border-gray-300'
+                  errors.firstName ? 'border-softRed' : 'border-gray-300'
                 } rounded-button focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition`}
-                placeholder="Your full name"
+                placeholder="Your first name"
               />
-              {errors.fullName && (
-                <p className="mt-2 text-sm text-softRed">{errors.fullName}</p>
+              {errors.firstName && (
+                <p className="mt-2 text-sm text-softRed">{errors.firstName}</p>
               )}
             </div>
 
