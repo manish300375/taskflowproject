@@ -9,7 +9,7 @@ interface AddTaskModalProps {
 }
 
 export default function AddTaskModal({ onClose, onSave }: AddTaskModalProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -32,16 +32,33 @@ export default function AddTaskModal({ onClose, onSave }: AddTaskModalProps) {
     setLoading(true);
 
     try {
-      const { error: saveError } = await supabase.from('tasks').insert({
+      const { data: newTask, error: saveError } = await supabase.from('tasks').insert({
         user_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
         due_date: dueDate || null,
         status,
         priority,
-      });
+      }).select().single();
 
       if (saveError) throw saveError;
+
+      if (newTask && session) {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-task-embedding`;
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskId: newTask.id,
+            title: newTask.title,
+            description: newTask.description,
+          }),
+        }).catch((err) => console.error('Error generating embedding:', err));
+      }
 
       onSave();
     } catch (err) {

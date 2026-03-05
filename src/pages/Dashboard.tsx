@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar';
 import AddTaskModal from '../components/AddTaskModal';
 import EditTaskModal from '../components/EditTaskModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import SmartSearch from '../components/SmartSearch';
 
 interface Task {
   id: string;
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [subtasks, setSubtasks] = useState<Map<string, Subtask[]>>(new Map());
   const [loadingSubtasks, setLoadingSubtasks] = useState<Set<string>>(new Set());
+  const [searchResultIds, setSearchResultIds] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -255,7 +257,13 @@ export default function Dashboard() {
   };
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
+    let filtered = tasks;
+
+    if (searchResultIds !== null) {
+      filtered = tasks.filter((task) => searchResultIds.includes(task.id));
+    }
+
+    return filtered.filter((task) => {
       if (filterPriority !== 'all' && task.priority !== filterPriority) {
         return false;
       }
@@ -296,15 +304,24 @@ export default function Dashboard() {
 
       return true;
     });
-  }, [tasks, filterPriority, filterStatus, filterDueDate]);
+  }, [tasks, filterPriority, filterStatus, filterDueDate, searchResultIds]);
 
   const clearFilters = () => {
     setFilterPriority('all');
     setFilterStatus('all');
     setFilterDueDate('all');
+    setSearchResultIds(null);
   };
 
-  const hasActiveFilters = filterPriority !== 'all' || filterStatus !== 'all' || filterDueDate !== 'all';
+  const hasActiveFilters = filterPriority !== 'all' || filterStatus !== 'all' || filterDueDate !== 'all' || searchResultIds !== null;
+
+  const handleSearchResults = (taskIds: string[]) => {
+    setSearchResultIds(taskIds);
+  };
+
+  const handleClearSearch = () => {
+    setSearchResultIds(null);
+  };
 
   if (loading) {
     return (
@@ -336,6 +353,13 @@ export default function Dashboard() {
             Add Task
           </button>
         </div>
+
+        {tasks.length > 0 && (
+          <SmartSearch
+            onSearchResults={handleSearchResults}
+            onClearSearch={handleClearSearch}
+          />
+        )}
 
         {tasks.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-card shadow-soft">

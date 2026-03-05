@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { X } from 'lucide-react';
 
@@ -20,6 +21,7 @@ interface EditTaskModalProps {
 }
 
 export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
+  const { session } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -61,6 +63,23 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
         .eq('id', task.id);
 
       if (updateError) throw updateError;
+
+      if (session) {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-task-embedding`;
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskId: task.id,
+            title: title.trim(),
+            description: description.trim() || null,
+          }),
+        }).catch((err) => console.error('Error generating embedding:', err));
+      }
 
       onSave();
     } catch (err) {
