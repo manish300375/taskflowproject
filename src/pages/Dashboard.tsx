@@ -160,8 +160,12 @@ export default function Dashboard() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Edge function error:', errorData);
+        alert(`Failed to generate subtasks: ${errorData.error || 'Unknown error'}`);
         throw new Error(errorData.error || 'Failed to generate subtasks');
       }
+
+      const result = await response.json();
+      console.log('Edge function response:', result);
 
       const { data: newSubtasks, error: refetchError } = await supabase
         .from('subtasks')
@@ -172,6 +176,10 @@ export default function Dashboard() {
       if (refetchError) throw refetchError;
 
       setSubtasks(new Map(subtasks.set(taskId, newSubtasks || [])));
+
+      if (newSubtasks && newSubtasks.length > 0) {
+        console.log(`Successfully generated ${newSubtasks.length} subtasks`);
+      }
     } catch (error) {
       console.error('Error loading subtasks:', error);
     } finally {
