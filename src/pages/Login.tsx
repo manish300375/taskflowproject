@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckSquare, Eye, EyeOff } from 'lucide-react';
+import { Leaf, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -31,10 +31,13 @@ export default function Login() {
     <div className="min-h-screen bg-cream flex items-center justify-center p-4">
       <div className="w-full max-w-[480px]">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <CheckSquare className="w-12 h-12 text-sage" strokeWidth={2.5} />
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center gap-2 mb-6 mx-auto hover:opacity-80 transition-opacity"
+          >
+            <Leaf className="w-12 h-12 text-sage" />
             <h1 className="text-4xl font-bold text-charcoal">TaskFlow</h1>
-          </div>
+          </button>
         </div>
 
         <div className="bg-white rounded-card shadow-soft p-10">
