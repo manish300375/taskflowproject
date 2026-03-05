@@ -1,11 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Leaf, LogOut, User } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 export default function Navbar() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [avatarUrl, setAvatarUrl] = useState('');
   const [fullName, setFullName] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -53,13 +54,40 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            <Leaf className="w-8 h-8 text-sage" />
-            <h1 className="text-2xl font-bold text-charcoal">TaskFlow</h1>
-          </button>
+          <div className="flex items-center gap-8">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <Leaf className="w-8 h-8 text-sage" />
+              <h1 className="text-2xl font-bold text-charcoal">TaskFlow</h1>
+            </button>
+
+            {user && (
+              <div className="flex items-center gap-6">
+                <Link
+                  to="/dashboard"
+                  className={`text-base font-semibold transition-colors ${
+                    location.pathname === '/dashboard'
+                      ? 'text-sage'
+                      : 'text-mutedGray hover:text-charcoal'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/tasks"
+                  className={`text-base font-semibold transition-colors ${
+                    location.pathname === '/tasks'
+                      ? 'text-sage'
+                      : 'text-mutedGray hover:text-charcoal'
+                  }`}
+                >
+                  Tasks
+                </Link>
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-4">
             {fullName && (
